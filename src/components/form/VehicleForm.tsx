@@ -41,7 +41,6 @@ const STEPS: { key: CostCategory; label: string }[] = [
   { key: 'entretien', label: 'Entretien' },
   { key: 'pneus', label: 'Pneus' },
   { key: 'assurance', label: 'Assurance' },
-  { key: 'fiscalite', label: 'Fiscalité' },
 ]
 
 const END_OF_CONTRACT_LABELS: Record<string, string> = {
@@ -76,12 +75,13 @@ function summaryChip(vehicle: VehicleConfig, category: CostCategory, isLease: bo
       if (isLease && 'insuranceIncluded' in f && f.insuranceIncluded) return null
       return `Assurance · ${formatEuro(vehicle.insuranceAnnualPremium)}/an`
     case 'fiscalite':
+      // Folded into the "financement" step — not a standalone step anymore, see below.
+      return null
+    case 'financement':
       if (vehicle.energyType === 'thermal') {
         return vehicle.fiscal.malus > 0 ? `Malus · ${formatEuro(vehicle.fiscal.malus)}` : null
       }
       return vehicle.fiscal.bonus > 0 ? `Bonus · ${formatEuro(vehicle.fiscal.bonus)}` : null
-    case 'financement':
-      return null
   }
 }
 
@@ -183,13 +183,44 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
 
         <div className="grid grid-cols-1 items-start gap-3.5 sm:grid-cols-2">
           {current.key === 'financement' && (
-            <FinancingFields
-              purchasePrice={vehicle.purchasePrice}
-              onPurchasePriceChange={(v) => onChange((veh) => ({ ...veh, purchasePrice: v }))}
-              financing={vehicle.financing}
-              onFinancingChange={(fin) => onChange((veh) => ({ ...veh, financing: fin }))}
-              fiscal={vehicle.fiscal}
-            />
+            <>
+              <FinancingFields
+                purchasePrice={vehicle.purchasePrice}
+                onPurchasePriceChange={(v) => onChange((veh) => ({ ...veh, purchasePrice: v }))}
+                financing={vehicle.financing}
+                onFinancingChange={(fin) => onChange((veh) => ({ ...veh, financing: fin }))}
+                fiscal={vehicle.fiscal}
+              />
+              {vehicle.energyType === 'thermal' && (
+                <NumberField
+                  label="Malus écologique / au poids"
+                  value={vehicle.fiscal.malus}
+                  onChange={(v) => onChange((veh) => ({ ...veh, fiscal: { ...veh.fiscal, malus: v } }))}
+                  suffix="€"
+                  step={10}
+                  help={isLease ? "Payé une fois, généralement ajouté au premier loyer par le concessionnaire." : undefined}
+                />
+              )}
+              {vehicle.energyType === 'electric' && (
+                <NumberField
+                  label="Bonus écologique"
+                  value={vehicle.fiscal.bonus}
+                  onChange={(v) => onChange((veh) => ({ ...veh, fiscal: { ...veh.fiscal, bonus: v } }))}
+                  suffix="€"
+                  step={10}
+                  help={
+                    isLease
+                      ? "Soumis à conditions de revenu depuis 2025 — généralement déduit directement du premier loyer par le concessionnaire."
+                      : "Soumis à conditions de revenu depuis 2025 — vérifiez votre éligibilité."
+                  }
+                />
+              )}
+              {isLease && (
+                <p className="col-span-2 text-xs text-muted-2">
+                  La carte grise reste supposée incluse dans le loyer et n'est pas comptée séparément en LOA/LDD.
+                </p>
+              )}
+            </>
           )}
 
           {current.key === 'energie' && (
@@ -250,39 +281,6 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
               />
             ))}
 
-          {current.key === 'fiscalite' && (
-            <>
-              {vehicle.energyType === 'thermal' && (
-                <NumberField
-                  label="Malus écologique / au poids"
-                  value={vehicle.fiscal.malus}
-                  onChange={(v) => onChange((veh) => ({ ...veh, fiscal: { ...veh.fiscal, malus: v } }))}
-                  suffix="€"
-                  step={10}
-                  help={isLease ? "Payé une fois, généralement ajouté au premier loyer par le concessionnaire." : undefined}
-                />
-              )}
-              {vehicle.energyType === 'electric' && (
-                <NumberField
-                  label="Bonus écologique"
-                  value={vehicle.fiscal.bonus}
-                  onChange={(v) => onChange((veh) => ({ ...veh, fiscal: { ...veh.fiscal, bonus: v } }))}
-                  suffix="€"
-                  step={10}
-                  help={
-                    isLease
-                      ? "Soumis à conditions de revenu depuis 2025 — généralement déduit directement du premier loyer par le concessionnaire."
-                      : "Soumis à conditions de revenu depuis 2025 — vérifiez votre éligibilité."
-                  }
-                />
-              )}
-              {isLease && (
-                <p className="col-span-2 text-xs text-muted-2">
-                  La carte grise reste supposée incluse dans le loyer et n'est pas comptée séparément en LOA/LDD.
-                </p>
-              )}
-            </>
-          )}
         </div>
 
         {current.key === 'financement' && isLease && 'maintenanceIncluded' in f && (
