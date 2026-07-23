@@ -68,6 +68,8 @@ export function createFinancingDefaults(mode: FinancingMode, purchasePrice: numb
         endOfContractAction: 'buyout',
         buybackValue: Math.round(purchasePrice * 0.45),
         estimatedResaleValueAfterBuyout: Math.round(purchasePrice * 0.4),
+        autoCalculate: false,
+        annualInterestRatePct: 4,
       }
       return financing
     }
@@ -136,6 +138,8 @@ export function createDefaultElectricVehicle(): VehicleConfig {
     endOfContractAction: 'buyout',
     buybackValue: 16500,
     estimatedResaleValueAfterBuyout: 15000,
+    autoCalculate: false,
+    annualInterestRatePct: 4,
   }
   return {
     id: 'vehicleB',

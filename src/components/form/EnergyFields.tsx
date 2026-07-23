@@ -32,7 +32,8 @@ export function EnergyFields({ energyType, energy, onChange }: Props) {
           onChange={(v) => onChange({ ...e, annualPriceInflationPct: v })}
           suffix="%/an"
           step={0.5}
-          help="Optionnel — laissez à 0 pour un prix constant."
+          min={-15}
+          help="Optionnel — laissez à 0 pour un prix constant (négatif possible si vous anticipez une baisse)."
         />
       </>
     )
@@ -77,7 +78,8 @@ export function EnergyFields({ energyType, energy, onChange }: Props) {
         onChange={(v) => onChange({ ...e, annualPriceInflationPct: v })}
         suffix="%/an"
         step={0.5}
-        help="Optionnel — laissez à 0 pour un prix constant."
+        min={-15}
+        help="Optionnel — laissez à 0 pour un prix constant (négatif possible si vous anticipez une baisse)."
       />
     </>
   )

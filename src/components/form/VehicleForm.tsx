@@ -42,7 +42,7 @@ export function VehicleForm({ vehicle, accentColor, onChange, onRemove }: Props)
         </div>
         {onRemove && (
           <button
-            className="mt-3 text-xs font-medium text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
+            className="mt-3 rounded text-xs font-medium text-slate-400 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-slate-500 dark:hover:text-red-400"
             onClick={onRemove}
           >
             Retirer ce véhicule de la comparaison
@@ -94,9 +94,10 @@ export function VehicleForm({ vehicle, accentColor, onChange, onRemove }: Props)
         <NumberField
           label="Durée de vie des pneus"
           value={vehicle.tireLifespanKm}
-          onChange={(v) => onChange((veh) => ({ ...veh, tireLifespanKm: v }))}
+          onChange={(v) => onChange((veh) => ({ ...veh, tireLifespanKm: Math.max(1, v) }))}
           suffix="km"
           step={1000}
+          min={1000}
         />
       </Section>
 

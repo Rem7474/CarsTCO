@@ -11,19 +11,20 @@ interface NumberFieldProps {
   help?: string
 }
 
-export function NumberField({ label, value, onChange, suffix, step = 1, min, max, help }: NumberFieldProps) {
+export function NumberField({ label, value, onChange, suffix, step = 1, min = 0, max, help }: NumberFieldProps) {
   return (
     <label className="flex flex-col gap-1 text-sm">
       <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="number"
-          className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           value={Number.isNaN(value) ? '' : value}
           step={step}
           min={min}
           max={max}
           onChange={(e) => onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
+          onFocus={(e) => e.target.select()}
         />
         {suffix && <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">{suffix}</span>}
       </div>
@@ -45,7 +46,7 @@ export function SelectField<T extends string>({ label, value, onChange, options,
     <label className="flex flex-col gap-1 text-sm">
       <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
       <select
-        className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
       >
@@ -72,7 +73,7 @@ export function CheckboxField({ label, checked, onChange, help }: CheckboxFieldP
     <label className="flex items-start gap-2 text-sm">
       <input
         type="checkbox"
-        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600"
+        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
       />
@@ -96,7 +97,7 @@ export function TextField({ label, value, onChange }: TextFieldProps) {
       <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
       <input
         type="text"
-        className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

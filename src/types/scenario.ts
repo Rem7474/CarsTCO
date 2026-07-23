@@ -35,6 +35,9 @@ export interface LoaFinancing extends LeaseFinancingBase {
   endOfContractAction: 'renew' | 'buyout' | 'return'
   buybackValue: number
   estimatedResaleValueAfterBuyout: number
+  /** When true, monthlyPayment is derived from purchasePrice/buybackValue/annualInterestRatePct/contractDurationMonths instead of entered manually. */
+  autoCalculate: boolean
+  annualInterestRatePct: number
 }
 
 export interface LddFinancing extends LeaseFinancingBase {

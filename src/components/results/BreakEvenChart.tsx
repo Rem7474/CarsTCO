@@ -99,7 +99,7 @@ export function BreakEvenChart({ scenario }: Props) {
         <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Coût cumulé — seuil de rentabilité</h3>
         <div className="flex gap-1 rounded-md border border-slate-200 p-0.5 text-xs dark:border-slate-700">
           <button
-            className={`rounded px-2 py-1 ${
+            className={`rounded px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
               mode === 'mileage'
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
@@ -109,7 +109,7 @@ export function BreakEvenChart({ scenario }: Props) {
             Vs kilométrage annuel
           </button>
           <button
-            className={`rounded px-2 py-1 ${
+            className={`rounded px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
               mode === 'duration'
                 ? 'bg-indigo-600 text-white'
                 : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
