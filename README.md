@@ -38,6 +38,32 @@ npm run lint     # oxlint
 - `src/components/form/` — formulaire de saisie par section.
 - `src/components/results/` — tableau de synthèse et graphiques.
 
+## CI/CD
+
+- `.github/workflows/ci.yml` — lint, typecheck, tests et build sur chaque push
+  vers `main` et chaque pull request.
+- `.github/workflows/deploy.yml` — build puis déploiement sur GitHub Pages à
+  chaque push sur `main`.
+
+### Domaine personnalisé (carstco.remcorp.fr)
+
+Le site est servi sur `carstco.remcorp.fr` via un fichier `public/CNAME`
+(copié tel quel dans `dist/` à chaque build, donc redéployé automatiquement).
+Pour que ça fonctionne, deux réglages sont nécessaires en dehors de ce repo :
+
+1. **DNS** — chez le registrar/gestionnaire DNS de `remcorp.fr`, ajouter un
+   enregistrement `CNAME` :
+   - Nom/hôte : `carstco`
+   - Valeur/cible : `rem7474.github.io.` (avec le point final)
+   - TTL : valeur par défaut (ex. 3600)
+2. **GitHub** — dans *Settings → Pages* du repo :
+   - Source : `GitHub Actions` (déjà utilisé par `deploy.yml`)
+   - Custom domain : `carstco.remcorp.fr` (normalement pré-rempli
+     automatiquement à partir du fichier `CNAME` après le premier déploiement
+     réussi ; sinon le saisir manuellement puis Save)
+   - Cocher **Enforce HTTPS** une fois que GitHub a fini de provisionner le
+     certificat (peut prendre jusqu'à 24h après la propagation DNS)
+
 ## Hypothèses de calcul notables
 
 - En LOA/LDD, le bonus/malus écologique et la carte grise sont supposés déjà
