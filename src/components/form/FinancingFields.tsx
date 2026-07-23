@@ -1,4 +1,4 @@
-import type { Financing, FinancingMode } from '../../types/scenario'
+import type { Financing, FinancingMode, FiscalConfig } from '../../types/scenario'
 import { createFinancingDefaults } from '../../data/defaults'
 import { estimateLoaMonthlyPayment } from '../../lib/loaEstimate'
 import { formatEuro } from '../../lib/format'
@@ -19,9 +19,17 @@ interface Props {
   onPurchasePriceChange: (v: number) => void
   financing: Financing
   onFinancingChange: (f: Financing) => void
+  fiscal: FiscalConfig
 }
 
-export function FinancingFields({ purchasePrice, onPurchasePriceChange, financing, onFinancingChange }: Props) {
+export function FinancingFields({ purchasePrice, onPurchasePriceChange, financing, onFinancingChange, fiscal }: Props) {
+  const firstPaymentHelp =
+    fiscal.bonus > 0
+      ? `Dont ${formatEuro(fiscal.bonus)} de bonus écologique, généralement déduit directement par le concessionnaire.`
+      : fiscal.malus > 0
+        ? `Majoré en pratique du malus écologique (${formatEuro(fiscal.malus)}), voir la section Fiscalité ci-dessous.`
+        : undefined
+
   const handleModeChange = (mode: FinancingMode) => {
     if (mode === financing.mode) return
     onFinancingChange(createFinancingDefaults(mode, purchasePrice))
@@ -110,6 +118,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
             onChange={(v) => onFinancingChange({ ...financing, firstPayment: v })}
             suffix="€"
             step={100}
+            help={firstPaymentHelp}
           />
 
           {financing.mode === 'loa' && financing.autoCalculate ? (

@@ -129,13 +129,37 @@ describe('computeVehicleResult — LOA financing', () => {
       autoCalculate: false,
       annualInterestRatePct: 4,
     }
-    const vehicle = baseVehicle({ financing })
+    const vehicle = baseVehicle({ financing, fiscal: { malus: 0, bonus: 0 } })
     const result = computeVehicleResult(vehicle, 3, 15000) // 36 months, matches contract exactly
 
     // firstPayment + 36 monthly payments + buyback - resale-after-buyout, no mileage excess (usage == contractual)
     expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 36 + 10000 - 9000, 6)
     expect(result.notes.some((n) => n.includes("levée en fin de contrat"))).toBe(true)
     expect(result.breakdown.fiscalite).toBe(0)
+  })
+
+  it('still applies malus/bonus écologique in LOA (only carte grise is assumed included in the loyer)', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 2000,
+      monthlyPayment: 300,
+      contractDurationMonths: 36,
+      contractualAnnualMileageKm: 15000,
+      excessMileageCostPerKm: 0.1,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 250,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      endOfContractAction: 'renew',
+      buybackValue: 0,
+      estimatedResaleValueAfterBuyout: 0,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ financing, fiscal: { malus: 0, bonus: 3000 } })
+    const result = computeVehicleResult(vehicle, 3, 15000)
+
+    expect(result.breakdown.fiscalite).toBe(-3000)
   })
 
   it('falls back to restitution fees when a buyout is requested off a contract boundary', () => {

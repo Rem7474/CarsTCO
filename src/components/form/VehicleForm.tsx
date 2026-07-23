@@ -40,10 +40,23 @@ export function VehicleForm({ vehicle, accentColor, holdingYears, annualMileageK
   return (
     <div className="flex flex-col gap-3">
       <div
-        className="rounded-lg border-l-4 bg-white px-4 py-3 shadow-sm dark:bg-slate-900"
+        className="relative rounded-lg border-l-4 bg-white px-4 py-3 shadow-sm dark:bg-slate-900"
         style={{ borderLeftColor: accentColor }}
       >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        {onRemove && (
+          <button
+            type="button"
+            aria-label="Retirer ce véhicule de la comparaison"
+            title="Retirer ce véhicule de la comparaison"
+            className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-slate-400 hover:bg-red-50 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-slate-500 dark:hover:bg-red-950 dark:hover:text-red-400"
+            onClick={onRemove}
+          >
+            <span aria-hidden="true" className="text-base leading-none">
+              ×
+            </span>
+          </button>
+        )}
+        <div className="grid grid-cols-1 gap-3 pr-8 sm:grid-cols-2">
           <TextField label="Nom du véhicule" value={vehicle.label} onChange={(v) => onChange((veh) => ({ ...veh, label: v }))} />
           <SelectField
             label="Type d'énergie"
@@ -67,14 +80,6 @@ export function VehicleForm({ vehicle, accentColor, holdingYears, annualMileageK
             />
           </div>
         </div>
-        {onRemove && (
-          <button
-            className="mt-3 rounded text-xs font-medium text-slate-400 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-slate-500 dark:hover:text-red-400"
-            onClick={onRemove}
-          >
-            Retirer ce véhicule de la comparaison
-          </button>
-        )}
       </div>
 
       {warnings.length > 0 && (
@@ -96,6 +101,7 @@ export function VehicleForm({ vehicle, accentColor, holdingYears, annualMileageK
           onPurchasePriceChange={(v) => onChange((veh) => ({ ...veh, purchasePrice: v }))}
           financing={vehicle.financing}
           onFinancingChange={(f) => onChange((veh) => ({ ...veh, financing: f }))}
+          fiscal={vehicle.fiscal}
         />
       </Section>
 
@@ -157,33 +163,39 @@ export function VehicleForm({ vehicle, accentColor, holdingYears, annualMileageK
         )}
       </Section>
 
-      <Section title="Fiscalité (bonus/malus, carte grise)" defaultOpen={!isLease}>
-        {isLease ? (
-          <p className="col-span-2 text-sm text-slate-500 dark:text-slate-400">
-            En LOA/LDD, le bonus, le malus et la carte grise sont supposés déjà répercutés dans le loyer.
+      <Section title="Fiscalité (bonus/malus écologique)" defaultOpen>
+        {vehicle.energyType === 'thermal' && (
+          <NumberField
+            label="Malus écologique / au poids"
+            value={vehicle.fiscal.malus}
+            onChange={(v) => onChange((veh) => ({ ...veh, fiscal: { ...veh.fiscal, malus: v } }))}
+            suffix="€"
+            step={10}
+            help={
+              isLease
+                ? "Payé une fois, généralement ajouté au premier loyer par le concessionnaire."
+                : undefined
+            }
+          />
+        )}
+        {vehicle.energyType === 'electric' && (
+          <NumberField
+            label="Bonus écologique"
+            value={vehicle.fiscal.bonus}
+            onChange={(v) => onChange((veh) => ({ ...veh, fiscal: { ...veh.fiscal, bonus: v } }))}
+            suffix="€"
+            step={10}
+            help={
+              isLease
+                ? "Soumis à conditions de revenu depuis 2025 — généralement déduit directement du premier loyer par le concessionnaire."
+                : "Soumis à conditions de revenu depuis 2025 — vérifiez votre éligibilité."
+            }
+          />
+        )}
+        {isLease && (
+          <p className="col-span-2 text-xs text-slate-400 dark:text-slate-500">
+            La carte grise reste supposée incluse dans le loyer et n'est pas comptée séparément en LOA/LDD.
           </p>
-        ) : (
-          <>
-            {vehicle.energyType === 'thermal' && (
-              <NumberField
-                label="Malus écologique / au poids"
-                value={vehicle.fiscal.malus}
-                onChange={(v) => onChange((veh) => ({ ...veh, fiscal: { ...veh.fiscal, malus: v } }))}
-                suffix="€"
-                step={10}
-              />
-            )}
-            {vehicle.energyType === 'electric' && (
-              <NumberField
-                label="Bonus écologique"
-                value={vehicle.fiscal.bonus}
-                onChange={(v) => onChange((veh) => ({ ...veh, fiscal: { ...veh.fiscal, bonus: v } }))}
-                suffix="€"
-                step={10}
-                help="Soumis à conditions de revenu depuis 2025 — vérifiez votre éligibilité."
-              />
-            )}
-          </>
         )}
       </Section>
     </div>
