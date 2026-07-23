@@ -34,6 +34,8 @@ interface FinancingResult {
   fiscaliteCost: number
   maintenanceIncluded: boolean
   insuranceIncluded: boolean
+  /** False when the vehicle is bought out at the end of its LOA (no restitution, so no mileage check-out). */
+  mileagePenaltyApplies: boolean
   notes: string[]
 }
 
@@ -45,7 +47,7 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
   if (f.mode === 'cash') {
     const financementCost = vehicle.purchasePrice - f.resaleValueAtEnd
     const fiscaliteCost = f.carteGriseCost + vehicle.fiscal.malus - vehicle.fiscal.bonus
-    return { financementCost, fiscaliteCost, maintenanceIncluded: false, insuranceIncluded: false, notes }
+    return { financementCost, fiscaliteCost, maintenanceIncluded: false, insuranceIncluded: false, mileagePenaltyApplies: false, notes }
   }
 
   if (f.mode === 'credit') {
@@ -62,7 +64,7 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
     }
     financementCost -= f.resaleValueAtEnd
     const fiscaliteCost = f.carteGriseCost + vehicle.fiscal.malus - vehicle.fiscal.bonus
-    return { financementCost, fiscaliteCost, maintenanceIncluded: false, insuranceIncluded: false, notes }
+    return { financementCost, fiscaliteCost, maintenanceIncluded: false, insuranceIncluded: false, mileagePenaltyApplies: false, notes }
   }
 
   // LOA / LDD (lease-style financing)
@@ -92,11 +94,18 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
       : `LDD : ${numContracts} contrat(s) de ${f.contractDurationMonths} mois simulé(s) sur la durée de détention.`,
   )
 
+  // Buying out at the end of the contract means the vehicle is never handed back to the
+  // lessor, so there's no mileage check-out and no excess-mileage fee to pay.
+  let mileagePenaltyApplies = true
+
   if (f.mode === 'loa' && f.endOfContractAction === 'buyout') {
     if (endsOnBoundary) {
       financementCost += f.buybackValue
       financementCost -= f.estimatedResaleValueAfterBuyout
-      notes.push('Option d\'achat levée en fin de contrat, puis revente estimée immédiate prise en compte.')
+      mileagePenaltyApplies = false
+      notes.push(
+        "Option d'achat levée en fin de contrat, puis revente estimée immédiate prise en compte. Pas de restitution : aucun frais de dépassement kilométrique.",
+      )
     } else {
       financementCost += f.restitutionFees
       notes.push(
@@ -121,6 +130,7 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
     fiscaliteCost,
     maintenanceIncluded: f.maintenanceIncluded,
     insuranceIncluded: f.insuranceIncluded,
+    mileagePenaltyApplies,
     notes,
   }
 }
@@ -184,7 +194,9 @@ export function computeVehicleResult(
   const notes: string[] = []
 
   const financing = computeFinancing(vehicle, holdingYears)
-  const mileageCost = computeLeaseMileageCost(vehicle, holdingYears, annualMileageKm)
+  const mileageCost = financing.mileagePenaltyApplies
+    ? computeLeaseMileageCost(vehicle, holdingYears, annualMileageKm)
+    : 0
   const financementCost = financing.financementCost + mileageCost
   notes.push(...financing.notes)
 

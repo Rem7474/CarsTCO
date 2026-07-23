@@ -211,6 +211,33 @@ describe('computeVehicleResult — LOA financing', () => {
     expect(result.breakdown.financement).toBeCloseTo(15000 * 0.1, 6) // 15,000 excess km * 0.1€/km
   })
 
+  it('waives the excess-mileage fee when the vehicle is bought out (no restitution, no mileage check-out)', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 0,
+      monthlyPayment: 0,
+      contractDurationMonths: 36,
+      contractualAnnualMileageKm: 10000,
+      excessMileageCostPerKm: 0.1,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 250,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      endOfContractAction: 'buyout',
+      buybackValue: 0,
+      estimatedResaleValueAfterBuyout: 0,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ financing })
+    // Same 15,000 km/an over a 10,000 km/an contract as the test above, but bought out this
+    // time on an exact contract boundary — no restitution ever happens, so no excess-mileage fee.
+    const result = computeVehicleResult(vehicle, 3, 15000)
+
+    expect(result.breakdown.financement).toBeCloseTo(0, 6)
+    expect(result.notes.some((n) => n.includes('aucun frais de dépassement'))).toBe(true)
+  })
+
   it('uses the auto-calculated monthly payment instead of the manual one when autoCalculate is on', () => {
     const financing: LoaFinancing = {
       mode: 'loa',
