@@ -40,9 +40,14 @@ export function getVehicleWarnings(vehicle: VehicleConfig, usage: UsageContext):
     if (f.firstPayment > vehicle.purchasePrice) {
       warnings.push('Le premier loyer dépasse le prix catalogue.')
     }
+    const endsWithBuyoutOnBoundary =
+      f.mode === 'loa' &&
+      f.endOfContractAction === 'buyout' &&
+      (usage.holdingYears * 12) % Math.max(1, f.contractDurationMonths) === 0
+
     if (f.contractualAnnualMileageKm > 0 && usage.annualMileageKm > 0) {
       const ratio = usage.annualMileageKm / f.contractualAnnualMileageKm
-      if (ratio > 1.5) {
+      if (ratio > 1.5 && !endsWithBuyoutOnBoundary) {
         warnings.push(
           `Le kilométrage réel (${fmt(usage.annualMileageKm)} km/an) dépasse largement le forfait contractuel ` +
             `(${fmt(f.contractualAnnualMileageKm)} km/an) — des frais de dépassement importants sont à prévoir.`,

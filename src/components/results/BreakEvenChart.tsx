@@ -31,17 +31,19 @@ function ChartTooltip({
   payload,
   label,
   xSuffix,
+  formatLabel,
 }: {
   active?: boolean
   payload?: TooltipPayloadItem[]
   label?: string | number
   xSuffix: string
+  formatLabel?: (v: string | number) => string
 }) {
   if (!active || !payload || payload.length === 0) return null
   return (
     <div className="rounded-lg border border-border bg-[var(--chart-surface)] px-3 py-2 text-xs shadow-lg">
       <p className="mb-1 font-semibold text-[var(--chart-text-primary)]">
-        {label}
+        {formatLabel && label !== undefined ? formatLabel(label) : label}
         {xSuffix}
       </p>
       {payload.map((p) => (
@@ -57,16 +59,21 @@ function ChartTooltip({
   )
 }
 
-function buildLeadershipNarrative(segments: LeadershipSegment[], vehicleLabels: string[]): string | null {
+function buildLeadershipNarrative(
+  segments: LeadershipSegment[],
+  vehicleLabels: string[],
+  holdingYears: number,
+): string | null {
   if (segments.length === 0) return null
   if (segments.length === 1) {
     return `${vehicleLabels[segments[0].cheapestIndex]} est le moins cher sur toute la plage de kilométrage analysée.`
   }
+  const total = (km: number) => formatKm(km * holdingYears)
   const clauses = segments.map((seg, i) => {
     const label = vehicleLabels[seg.cheapestIndex]
-    if (seg.toKm === null) return `au-delà de ${formatKm(seg.fromKm)}/an, ${label} devient le moins cher`
-    if (i === 0) return `en dessous de ${formatKm(seg.toKm)}/an, ${label} est le moins cher`
-    return `entre ${formatKm(seg.fromKm)} et ${formatKm(seg.toKm)}/an, ${label} est le moins cher`
+    if (seg.toKm === null) return `au-delà de ${total(seg.fromKm)}, ${label} devient le moins cher`
+    if (i === 0) return `en dessous de ${total(seg.toKm)}, ${label} est le moins cher`
+    return `entre ${total(seg.fromKm)} et ${total(seg.toKm)}, ${label} est le moins cher`
   })
   return clauses.join(' ; ') + '.'
 }
@@ -78,20 +85,23 @@ export function BreakEvenChart({ scenario }: Props) {
   const durationPoints = useMemo(() => computeCostByDuration(scenario), [scenario])
   const leadershipSegments = useMemo(() => computeLeadershipSegments(mileagePoints), [mileagePoints])
   const narrative = useMemo(
-    () => buildLeadershipNarrative(leadershipSegments, scenario.vehicles.map((v) => v.label)),
-    [leadershipSegments, scenario.vehicles],
+    () => buildLeadershipNarrative(leadershipSegments, scenario.vehicles.map((v) => v.label), scenario.holdingYears),
+    [leadershipSegments, scenario.vehicles, scenario.holdingYears],
   )
 
   const data = useMemo(() => {
     const points = mode === 'mileage' ? mileagePoints : durationPoints
     return points.map((p) => {
-      const row: Record<string, number> = { x: 'annualMileageKm' in p ? p.annualMileageKm : p.years }
+      // Mileage mode plots total km driven over the holding period rather than an annual
+      // rate — more intuitive to read directly against the cumulative cost on the Y axis.
+      const x = 'annualMileageKm' in p ? p.annualMileageKm * scenario.holdingYears : p.years
+      const row: Record<string, number> = { x }
       scenario.vehicles.forEach((vehicle, i) => {
         row[vehicle.id] = p.costs[i]
       })
       return row
     })
-  }, [mode, mileagePoints, durationPoints, scenario.vehicles])
+  }, [mode, mileagePoints, durationPoints, scenario.vehicles, scenario.holdingYears])
 
   return (
     <div className="rounded-[20px] border border-border bg-white px-[26px] py-6">
@@ -104,7 +114,7 @@ export function BreakEvenChart({ scenario }: Props) {
             }`}
             onClick={() => setMode('mileage')}
           >
-            Vs kilométrage
+            Vs kilométrage total
           </button>
           <button
             className={`rounded-[7px] px-3.5 py-1.5 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
@@ -124,7 +134,7 @@ export function BreakEvenChart({ scenario }: Props) {
           <CartesianGrid strokeDasharray="0" vertical={false} stroke="var(--chart-grid)" />
           <XAxis
             dataKey="x"
-            tickFormatter={(v) => (mode === 'mileage' ? `${(v / 1000).toFixed(0)}k` : `${v} ans`)}
+            tickFormatter={(v) => (mode === 'mileage' ? `${(v / 1000).toFixed(0)}k km` : `${v} ans`)}
             stroke="var(--chart-axis)"
             tick={{ fill: 'var(--chart-muted)', fontSize: 12 }}
           />
@@ -135,7 +145,12 @@ export function BreakEvenChart({ scenario }: Props) {
             width={80}
           />
           <Tooltip
-            content={<ChartTooltip xSuffix={mode === 'mileage' ? ' km/an' : ' ans'} />}
+            content={
+              <ChartTooltip
+                xSuffix={mode === 'mileage' ? ' km au total' : ' ans'}
+                formatLabel={mode === 'mileage' ? (v) => Number(v).toLocaleString('fr-FR') : undefined}
+              />
+            }
             cursor={{ stroke: 'var(--chart-axis)', strokeDasharray: '3 3' }}
           />
           <Legend
@@ -144,7 +159,7 @@ export function BreakEvenChart({ scenario }: Props) {
           />
           {mode === 'mileage' && (
             <ReferenceLine
-              x={scenario.annualMileageKm}
+              x={scenario.annualMileageKm * scenario.holdingYears}
               stroke="var(--chart-axis)"
               strokeDasharray="4 4"
               label={{ value: 'Usage actuel', position: 'top', fill: 'var(--chart-muted)', fontSize: 11 }}
