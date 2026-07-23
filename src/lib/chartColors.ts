@@ -1,13 +1,13 @@
-import type { CostCategory } from '../types/scenario'
+import type { CostCategory, EnergyType, VehicleConfig } from '../types/scenario'
 
 /** Fixed hue order — a category's color never changes based on rank or value. */
 export const CATEGORY_COLORS: Record<CostCategory, string> = {
-  financement: 'var(--series-1)',
-  energie: 'var(--series-2)',
-  entretien: 'var(--series-3)',
-  pneus: 'var(--series-4)',
-  assurance: 'var(--series-7)',
-  fiscalite: 'var(--series-8)',
+  financement: '#2F5D62',
+  energie: '#DD5B33',
+  entretien: '#C98A2C',
+  pneus: '#8C8267',
+  assurance: '#4C6B8A',
+  fiscalite: '#8A4C6B',
 }
 
 export const CATEGORY_LABELS: Record<CostCategory, string> = {
@@ -28,23 +28,26 @@ export const CATEGORY_ORDER: CostCategory[] = [
   'fiscalite',
 ]
 
-/**
- * Vehicle identity colors, assigned by position (1st vehicle added, 2nd, ...) and fixed
- * regardless of which one is cheapest. Same validated adjacent-pair order as the category
- * palette; a comparison beyond 8 vehicles would need a new set, which is why the UI caps
- * the vehicle count (see MAX_VEHICLES).
- */
-export const VEHICLE_COLORS = [
-  'var(--series-1)',
-  'var(--series-2)',
-  'var(--series-3)',
-  'var(--series-4)',
-  'var(--series-5)',
-  'var(--series-6)',
-  'var(--series-7)',
-  'var(--series-8)',
-]
+/** Card chrome (header tint, border, heading color) — grouped by energy family, not identity. */
+export const ENERGY_ACCENT: Record<EnergyType, { tint: string; border: string; deep: string; base: string; dark: string }> = {
+  electric: { tint: '#E4F0EC', border: '#C7DED6', deep: '#123B32', base: '#0E6F5C', dark: '#0A5347' },
+  thermal: { tint: '#FBE6DA', border: '#EAC5B0', deep: '#5C2B15', base: '#DD5B33', dark: '#9A4A28' },
+}
 
-export function getVehicleColor(index: number): string {
-  return VEHICLE_COLORS[index % VEHICLE_COLORS.length]
+/** Identity shade ramps within a energy family, so same-type vehicles stay distinguishable in dots/lines. */
+const IDENTITY_RAMPS: Record<EnergyType, string[]> = {
+  electric: ['#0E6F5C', '#1C8E76', '#0A5347'],
+  thermal: ['#DD5B33', '#C9752E', '#9A4A28'],
+}
+
+/**
+ * Per-vehicle identity color (ribbon dots, KPI cards, table headers, break-even chart lines).
+ * Grouped by energy type (teal family for electric, coral family for thermal) with a shade
+ * ramp so multiple vehicles of the same energy type stay distinguishable.
+ */
+export function getVehicleColor(vehicle: VehicleConfig, vehicles: VehicleConfig[]): string {
+  const sameType = vehicles.filter((v) => v.energyType === vehicle.energyType)
+  const idx = Math.max(0, sameType.findIndex((v) => v.id === vehicle.id))
+  const ramp = IDENTITY_RAMPS[vehicle.energyType]
+  return ramp[idx % ramp.length]
 }

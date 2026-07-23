@@ -39,7 +39,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload || payload.length === 0) return null
   return (
-    <div className="rounded-md border border-slate-200 bg-[var(--chart-surface)] px-3 py-2 text-xs shadow-lg dark:border-slate-700">
+    <div className="rounded-lg border border-border bg-[var(--chart-surface)] px-3 py-2 text-xs shadow-lg">
       <p className="mb-1 font-semibold text-[var(--chart-text-primary)]">
         {label}
         {xSuffix}
@@ -94,36 +94,30 @@ export function BreakEvenChart({ scenario }: Props) {
   }, [mode, mileagePoints, durationPoints, scenario.vehicles])
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">Coût cumulé — seuil de rentabilité</h3>
-        <div className="flex gap-1 rounded-md border border-slate-200 p-0.5 text-xs dark:border-slate-700">
+    <div className="rounded-[20px] border border-border bg-white px-[26px] py-6">
+      <div className="mb-1.5 flex flex-wrap items-center justify-between gap-3">
+        <h3 className="font-display text-[15.5px] font-bold text-ink">Coût cumulé — seuil de rentabilité</h3>
+        <div className="flex gap-1 rounded-[10px] bg-panel p-1 text-[12.5px]">
           <button
-            className={`rounded px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-              mode === 'mileage'
-                ? 'bg-indigo-600 text-white'
-                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+            className={`rounded-[7px] px-3.5 py-1.5 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+              mode === 'mileage' ? 'bg-teal font-bold text-white' : 'text-muted hover:text-ink'
             }`}
             onClick={() => setMode('mileage')}
           >
-            Vs kilométrage annuel
+            Vs kilométrage
           </button>
           <button
-            className={`rounded px-2 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 ${
-              mode === 'duration'
-                ? 'bg-indigo-600 text-white'
-                : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
+            className={`rounded-[7px] px-3.5 py-1.5 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-teal ${
+              mode === 'duration' ? 'bg-teal font-bold text-white' : 'text-muted hover:text-ink'
             }`}
             onClick={() => setMode('duration')}
           >
-            Vs durée de détention
+            Vs durée
           </button>
         </div>
       </div>
 
-      {mode === 'mileage' && narrative && (
-        <p className="mb-2 text-xs text-slate-500 dark:text-slate-400">{narrative}</p>
-      )}
+      {mode === 'mileage' && narrative && <p className="mb-3.5 text-[12.5px] text-muted">{narrative}</p>}
 
       <ResponsiveContainer width="100%" height={320}>
         <LineChart data={data} margin={{ top: 24, right: 16, left: 0, bottom: 0 }}>
@@ -156,13 +150,13 @@ export function BreakEvenChart({ scenario }: Props) {
               label={{ value: 'Usage actuel', position: 'top', fill: 'var(--chart-muted)', fontSize: 11 }}
             />
           )}
-          {scenario.vehicles.map((vehicle, i) => (
+          {scenario.vehicles.map((vehicle) => (
             <Line
               key={vehicle.id}
               type="monotone"
               dataKey={vehicle.id}
               name={vehicle.label}
-              stroke={getVehicleColor(i)}
+              stroke={getVehicleColor(vehicle, scenario.vehicles)}
               strokeWidth={2}
               dot={false}
             />

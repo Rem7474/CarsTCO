@@ -32,15 +32,15 @@ export class ErrorBoundary extends Component<Props, State> {
     if (!this.state.hasError) return this.props.children
 
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 dark:bg-slate-950">
-        <div className="max-w-md rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900">
-          <h1 className="text-lg font-semibold text-slate-900 dark:text-white">Une erreur est survenue</h1>
-          <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+      <div className="flex min-h-screen items-center justify-center bg-cream px-4 font-sans">
+        <div className="max-w-md rounded-2xl border border-border bg-white p-6 text-center">
+          <h1 className="font-display text-lg font-bold text-ink">Une erreur est survenue</h1>
+          <p className="mt-2 text-sm text-muted">
             Le scénario chargé (import, lien partagé ou sauvegarde locale) semble corrompu ou invalide. Réinitialiser
             l'application pour repartir d'un scénario par défaut.
           </p>
           <button
-            className="mt-4 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700"
+            className="mt-4 rounded-[10px] bg-teal px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-teal-dark"
             onClick={this.handleReset}
           >
             Réinitialiser CarsTCO

@@ -18,7 +18,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   if (!active || !payload || payload.length === 0) return null
   const total = payload.reduce((sum, p) => sum + p.value, 0)
   return (
-    <div className="rounded-md border border-slate-200 bg-[var(--chart-surface)] px-3 py-2 text-xs shadow-lg dark:border-slate-700">
+    <div className="rounded-lg border border-border bg-[var(--chart-surface)] px-3 py-2 text-xs shadow-lg">
       <p className="mb-1 font-semibold text-[var(--chart-text-primary)]">{label}</p>
       {payload
         .slice()
@@ -32,7 +32,7 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
             <span className="tabular-nums text-[var(--chart-text-primary)]">{formatEuro(p.value)}</span>
           </div>
         ))}
-      <div className="mt-1 flex items-center justify-between gap-4 border-t border-slate-200 pt-1 font-semibold text-[var(--chart-text-primary)] dark:border-slate-700">
+      <div className="mt-1 flex items-center justify-between gap-4 border-t border-border pt-1 font-semibold text-[var(--chart-text-primary)]">
         <span>Total</span>
         <span className="tabular-nums">{formatEuro(total)}</span>
       </div>
@@ -45,10 +45,8 @@ export function CostBreakdownChart({ vehicles, results }: Props) {
   const height = Math.max(240, 90 + vehicles.length * 80)
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <h3 className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-100">
-        Décomposition des coûts par poste
-      </h3>
+    <div className="rounded-[20px] border border-border bg-white px-[26px] py-6">
+      <h3 className="mb-4 font-display text-[15.5px] font-bold text-ink">Décomposition des coûts par poste</h3>
       <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }} barGap={2}>
           <CartesianGrid strokeDasharray="0" horizontal={false} stroke="var(--chart-grid)" />

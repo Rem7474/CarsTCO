@@ -107,8 +107,14 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
     financementCost += f.restitutionFees
   }
 
-  const fiscaliteCost = 0 // Assumed already embedded in the lease payment for LOA/LDD.
-  notes.push('LOA/LDD : malus, bonus et carte grise supposés déjà inclus dans le loyer.')
+  // Carte grise is assumed already embedded in the lease payment (registered to the
+  // lessor), but malus/bonus écologique are real cash flows for the lessee — in
+  // practice they're usually netted against the first payment/apport by the dealer.
+  const fiscaliteCost = vehicle.fiscal.malus - vehicle.fiscal.bonus
+  notes.push(
+    'LOA/LDD : la carte grise est supposée déjà incluse dans le loyer ; le bonus/malus écologique est compté ' +
+      'séparément (en pratique souvent déduit/ajouté directement sur le premier loyer par le concessionnaire).',
+  )
 
   return {
     financementCost,
