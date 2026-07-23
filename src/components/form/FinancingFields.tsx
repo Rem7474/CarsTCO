@@ -113,9 +113,9 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
           />
 
           {financing.mode === 'loa' && financing.autoCalculate ? (
-            <div className="flex flex-col gap-1 text-sm">
-              <span className="font-medium text-slate-700 dark:text-slate-300">Loyer mensuel (calculé)</span>
-              <div className="rounded-md border border-dashed border-indigo-300 bg-indigo-50 px-2.5 py-1.5 text-slate-700 dark:border-indigo-700 dark:bg-indigo-950 dark:text-slate-200">
+            <div className="flex flex-col gap-1.5 text-[13px]">
+              <span className="font-semibold text-ink-soft">Loyer mensuel (calculé)</span>
+              <div className="rounded-[10px] border border-dashed border-teal bg-teal-tint px-3 py-[9px] font-bold text-teal-deep">
                 {formatEuro(
                   estimateLoaMonthlyPayment({
                     purchasePrice,
@@ -127,7 +127,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
                 )}
                 /mois
               </div>
-              <span className="text-xs text-slate-400 dark:text-slate-500">
+              <span className="text-xs text-muted-2">
                 Estimation à partir du prix, de l'option d'achat, du taux et de la durée.
               </span>
             </div>

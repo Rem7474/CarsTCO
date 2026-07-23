@@ -33,20 +33,20 @@ export function ConfirmDialog({
       ref={ref}
       onClose={onCancel}
       onCancel={onCancel}
-      className="rounded-lg border border-slate-200 bg-white p-0 shadow-xl backdrop:bg-slate-900/40 dark:border-slate-700 dark:bg-slate-900"
+      className="rounded-2xl border border-border bg-white p-0 shadow-xl backdrop:bg-ink/40"
     >
       <div className="w-80 p-5">
-        <h2 className="text-base font-semibold text-slate-900 dark:text-white">{title}</h2>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{message}</p>
+        <h2 className="font-display text-base font-bold text-ink">{title}</h2>
+        <p className="mt-2 text-sm text-muted">{message}</p>
         <div className="mt-4 flex justify-end gap-2">
           <button
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="rounded-[10px] border border-border px-3 py-1.5 text-sm font-semibold text-ink-soft hover:bg-panel focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
             onClick={onCancel}
           >
             {cancelLabel}
           </button>
           <button
-            className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="rounded-[10px] bg-teal px-3 py-1.5 text-sm font-bold text-white hover:bg-teal-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-dark"
             onClick={onConfirm}
           >
             {confirmLabel}

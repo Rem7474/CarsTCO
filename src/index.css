@@ -1,48 +1,57 @@
 @import "tailwindcss";
 
-:root {
-  color-scheme: light dark;
+@theme {
+  --font-sans: 'Manrope', system-ui, sans-serif;
+  --font-display: 'Sora', system-ui, sans-serif;
 
-  --chart-surface: #fcfcfb;
-  --chart-text-primary: #0b0b0b;
-  --chart-text-secondary: #52514e;
-  --chart-muted: #898781;
-  --chart-grid: #e1e0d9;
-  --chart-axis: #c3c2b7;
+  --color-cream: #faf6ee;
+  --color-panel: #f1ecdf;
+  --color-chip: #f6f3ea;
+  --color-border: #e6dfcd;
+  --color-border-soft: #ede7d8;
+  --color-input-border: #e0d8c4;
+  --color-dash: #c9bfa3;
 
-  --series-1: #2a78d6; /* blue */
-  --series-2: #eb6834; /* orange */
-  --series-3: #1baf7a; /* aqua */
-  --series-4: #eda100; /* yellow */
-  --series-5: #e87ba4; /* magenta */
-  --series-6: #008300; /* green */
-  --series-7: #4a3aa7; /* violet */
-  --series-8: #e34948; /* red */
+  --color-ink: #26221a;
+  --color-ink-soft: #4a4638;
+  --color-muted: #6e6656;
+  --color-muted-2: #9a927e;
+  --color-muted-3: #8c8267;
+
+  --color-teal: #0e6f5c;
+  --color-teal-dark: #0a5347;
+  --color-teal-deep: #123b32;
+  --color-teal-tint: #e4f0ec;
+  --color-teal-border: #c7ded6;
+
+  --color-coral: #dd5b33;
+  --color-coral-dark: #9a4a28;
+  --color-coral-deep: #5c2b15;
+  --color-coral-tint: #fbe6da;
+  --color-coral-border: #eac5b0;
+
+  --color-amber-bg: #fbf1de;
+  --color-amber-border: #efd9a0;
+  --color-amber-text: #7a5a16;
+
+  --color-red-text: #b3261e;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --chart-surface: #1a1a19;
-    --chart-text-primary: #ffffff;
-    --chart-text-secondary: #c3c2b7;
-    --chart-muted: #898781;
-    --chart-grid: #2c2c2a;
-    --chart-axis: #383835;
+:root {
+  color-scheme: light;
 
-    --series-1: #3987e5;
-    --series-2: #d95926;
-    --series-3: #199e70;
-    --series-4: #c98500;
-    --series-5: #d55181;
-    --series-6: #008300;
-    --series-7: #9085e9;
-    --series-8: #e66767;
-  }
+  --chart-surface: #ffffff;
+  --chart-text-primary: #26221a;
+  --chart-text-secondary: #4a4638;
+  --chart-muted: #9a927e;
+  --chart-grid: #ede7d8;
+  --chart-axis: #d3cbb4;
 }
 
 body {
   margin: 0;
-  font-family: system-ui, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Manrope', system-ui, 'Segoe UI', Roboto, sans-serif;
+  background: #faf6ee;
 }
 
 input[type="number"]::-webkit-outer-spin-button,
@@ -55,15 +64,6 @@ input[type="number"] {
 }
 
 @media print {
-  :root {
-    color-scheme: light;
-    --chart-surface: #ffffff;
-    --chart-text-primary: #0b0b0b;
-    --chart-text-secondary: #52514e;
-    --chart-muted: #898781;
-    --chart-grid: #e1e0d9;
-    --chart-axis: #c3c2b7;
-  }
   body {
     background: #fff !important;
   }

@@ -1,4 +1,7 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties } from 'react'
+
+const inputClass =
+  'w-full rounded-[10px] border border-input-border bg-white px-3 py-[9px] text-sm text-ink outline-none focus:border-teal focus-visible:ring-2 focus-visible:ring-teal'
 
 interface NumberFieldProps {
   label: string
@@ -13,12 +16,12 @@ interface NumberFieldProps {
 
 export function NumberField({ label, value, onChange, suffix, step = 1, min = 0, max, help }: NumberFieldProps) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
+    <label className="flex flex-col gap-1.5 text-[13px]">
+      <span className="font-semibold text-ink-soft">{label}</span>
       <div className="flex items-center gap-2">
         <input
           type="number"
-          className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+          className={inputClass}
           value={Number.isNaN(value) ? '' : value}
           step={step}
           min={min}
@@ -26,9 +29,9 @@ export function NumberField({ label, value, onChange, suffix, step = 1, min = 0,
           onChange={(e) => onChange(e.target.value === '' ? 0 : parseFloat(e.target.value))}
           onFocus={(e) => e.target.select()}
         />
-        {suffix && <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">{suffix}</span>}
+        {suffix && <span className="shrink-0 text-xs text-muted">{suffix}</span>}
       </div>
-      {help && <span className="text-xs text-slate-400 dark:text-slate-500">{help}</span>}
+      {help && <span className="text-xs text-muted-2">{help}</span>}
     </label>
   )
 }
@@ -39,14 +42,26 @@ interface SelectFieldProps<T extends string> {
   onChange: (value: T) => void
   options: { value: T; label: string }[]
   help?: string
+  /** Keeps the field accessible while hiding the visible <span> label — used inside compact chip-style pickers. */
+  visuallyHiddenLabel?: boolean
+  /** Pill-style, single-line variant used inline in card headers. */
+  compact?: boolean
 }
 
-export function SelectField<T extends string>({ label, value, onChange, options, help }: SelectFieldProps<T>) {
+export function SelectField<T extends string>({
+  label,
+  value,
+  onChange,
+  options,
+  help,
+  visuallyHiddenLabel,
+  compact,
+}: SelectFieldProps<T>) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
+    <label className={compact ? 'inline-flex flex-col items-start gap-1.5 text-[13px]' : 'flex flex-col gap-1.5 text-[13px]'}>
+      <span className={visuallyHiddenLabel ? 'sr-only' : 'font-semibold text-ink-soft'}>{label}</span>
       <select
-        className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        className={compact ? 'w-auto self-start rounded-full border border-input-border bg-white px-3 py-[5px] text-[12.5px] font-semibold text-ink-soft outline-none focus-visible:ring-2 focus-visible:ring-teal' : inputClass}
         value={value}
         onChange={(e) => onChange(e.target.value as T)}
       >
@@ -56,7 +71,7 @@ export function SelectField<T extends string>({ label, value, onChange, options,
           </option>
         ))}
       </select>
-      {help && <span className="text-xs text-slate-400 dark:text-slate-500">{help}</span>}
+      {help && <span className="text-xs text-muted-2">{help}</span>}
     </label>
   )
 }
@@ -70,16 +85,16 @@ interface CheckboxFieldProps {
 
 export function CheckboxField({ label, checked, onChange, help }: CheckboxFieldProps) {
   return (
-    <label className="flex items-start gap-2 text-sm">
+    <label className="flex items-start gap-2 text-[13px]">
       <input
         type="checkbox"
-        className="mt-0.5 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600"
+        className="mt-0.5 h-4 w-4 rounded border-input-border text-teal focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
       />
       <span className="flex flex-col">
-        <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
-        {help && <span className="text-xs text-slate-400 dark:text-slate-500">{help}</span>}
+        <span className="font-semibold text-ink-soft">{label}</span>
+        {help && <span className="text-xs text-muted-2">{help}</span>}
       </span>
     </label>
   )
@@ -89,45 +104,22 @@ interface TextFieldProps {
   label: string
   value: string
   onChange: (value: string) => void
+  visuallyHiddenLabel?: boolean
+  className?: string
+  style?: CSSProperties
 }
 
-export function TextField({ label, value, onChange }: TextFieldProps) {
+export function TextField({ label, value, onChange, visuallyHiddenLabel, className, style }: TextFieldProps) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="font-medium text-slate-700 dark:text-slate-300">{label}</span>
+    <label className="flex flex-col gap-1.5 text-[13px]">
+      <span className={visuallyHiddenLabel ? 'sr-only' : 'font-semibold text-ink-soft'}>{label}</span>
       <input
         type="text"
-        className="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+        className={className ?? inputClass}
+        style={style}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />
     </label>
-  )
-}
-
-interface SectionProps {
-  title: string
-  children: ReactNode
-  defaultOpen?: boolean
-  icon?: ReactNode
-}
-
-export function Section({ title, children, defaultOpen = true, icon }: SectionProps) {
-  return (
-    <details
-      className="group rounded-lg border border-slate-200 bg-white open:shadow-sm dark:border-slate-700 dark:bg-slate-900"
-      open={defaultOpen}
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-sm font-semibold text-slate-800 dark:text-slate-100">
-        <span className="flex items-center gap-2">
-          {icon}
-          {title}
-        </span>
-        <span className="text-slate-400 transition-transform group-open:rotate-180">▾</span>
-      </summary>
-      <div className="grid grid-cols-1 gap-3 border-t border-slate-100 p-4 sm:grid-cols-2 dark:border-slate-800">
-        {children}
-      </div>
-    </details>
   )
 }
