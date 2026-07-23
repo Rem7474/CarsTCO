@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type {
   CostCategory,
@@ -91,6 +91,18 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
   const isLease = vehicle.financing.mode === 'loa' || vehicle.financing.mode === 'ldd'
   const warnings = getVehicleWarnings(vehicle, { holdingYears, annualMileageKm })
 
+  const stepHeaderRef = useRef<HTMLDivElement>(null)
+  const isFirstRender = useRef(true)
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    // Step content height varies a lot (Financement vs Pneus) — anchor the view on the
+    // step header on every change so "Suivant"/"Précédent" stay at a predictable spot.
+    stepHeaderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [step])
+
   const handleTemplateChange = (templateId: string) => {
     if (templateId === TEMPLATE_PLACEHOLDER) return
     const template = VEHICLE_TEMPLATES.find((t) => t.id === templateId)
@@ -177,7 +189,11 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
       </div>
 
       <div className="flex flex-col gap-3.5 px-[22px] py-5">
-        <div className="text-sm font-bold" style={{ color: accent.deep }}>
+        <div
+          ref={stepHeaderRef}
+          className="text-sm font-bold scroll-mt-24"
+          style={{ color: accent.deep }}
+        >
           Étape {step + 1} sur {STEPS.length} — {current.label}
         </div>
 
@@ -216,7 +232,7 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
                 />
               )}
               {isLease && (
-                <p className="col-span-2 text-xs text-muted-2">
+                <p className="sm:col-span-2 text-xs text-muted-2">
                   La carte grise reste supposée incluse dans le loyer et n'est pas comptée séparément en LOA/LDD.
                 </p>
               )}
@@ -233,7 +249,7 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
 
           {current.key === 'entretien' &&
             (isLease && 'maintenanceIncluded' in f && f.maintenanceIncluded ? (
-              <p className="col-span-2 text-sm text-muted">
+              <p className="sm:col-span-2 text-sm text-muted">
                 Entretien inclus dans le loyer — champ ignoré pour éviter un double comptage.
               </p>
             ) : (
@@ -268,7 +284,7 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
 
           {current.key === 'assurance' &&
             (isLease && 'insuranceIncluded' in f && f.insuranceIncluded ? (
-              <p className="col-span-2 text-sm text-muted">
+              <p className="sm:col-span-2 text-sm text-muted">
                 Assurance incluse dans le loyer — champ ignoré pour éviter un double comptage.
               </p>
             ) : (
