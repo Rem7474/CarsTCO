@@ -48,10 +48,17 @@ export function CostBreakdownChart({ vehicles, results }: Props) {
     <div className="rounded-[20px] border border-border bg-white px-[26px] py-6">
       <h3 className="mb-4 font-display text-[15.5px] font-bold text-ink">Décomposition des coûts par poste</h3>
       <ResponsiveContainer width="100%" height={height}>
-        <BarChart data={data} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }} barGap={2}>
+        <BarChart
+          data={data}
+          layout="vertical"
+          stackOffset="sign"
+          margin={{ top: 0, right: 24, left: 0, bottom: 0 }}
+          barGap={2}
+        >
           <CartesianGrid strokeDasharray="0" horizontal={false} stroke="var(--chart-grid)" />
           <XAxis
             type="number"
+            domain={[(min: number) => Math.min(0, min), (max: number) => Math.max(0, max)]}
             tickFormatter={(v) => formatEuro(v)}
             stroke="var(--chart-axis)"
             tick={{ fill: 'var(--chart-muted)', fontSize: 12 }}
