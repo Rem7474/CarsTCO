@@ -1,5 +1,7 @@
 import type { Financing, FinancingMode } from '../../types/scenario'
 import { createFinancingDefaults } from '../../data/defaults'
+import { estimateLoaMonthlyPayment } from '../../lib/loaEstimate'
+import { formatEuro } from '../../lib/format'
 import { CheckboxField, NumberField, SelectField } from './Field'
 
 const MODE_OPTIONS: { value: FinancingMode; label: string }[] = [
@@ -8,6 +10,9 @@ const MODE_OPTIONS: { value: FinancingMode; label: string }[] = [
   { value: 'loa', label: 'LOA (avec option d\'achat)' },
   { value: 'ldd', label: 'LDD / LLD (location longue durée)' },
 ]
+
+const MODE_HELP =
+  "Comptant : payé cash, vous êtes propriétaire immédiatement. Crédit : emprunt classique, vous êtes propriétaire dès le départ. LOA : location avec option d'achat en fin de contrat. LDD/LLD : location sans option d'achat, à restituer ou reconduire."
 
 interface Props {
   purchasePrice: number
@@ -31,7 +36,13 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
         suffix="€"
         step={100}
       />
-      <SelectField label="Mode d'acquisition" value={financing.mode} onChange={handleModeChange} options={MODE_OPTIONS} />
+      <SelectField
+        label="Mode d'acquisition"
+        value={financing.mode}
+        onChange={handleModeChange}
+        options={MODE_OPTIONS}
+        help={MODE_HELP}
+      />
 
       {financing.mode === 'cash' && (
         <>
@@ -70,9 +81,10 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
           <NumberField
             label="Durée du prêt"
             value={financing.loanDurationMonths}
-            onChange={(v) => onFinancingChange({ ...financing, loanDurationMonths: v })}
+            onChange={(v) => onFinancingChange({ ...financing, loanDurationMonths: Math.max(1, v) })}
             suffix="mois"
             step={1}
+            min={1}
           />
           <NumberField
             label="Frais de carte grise"
@@ -99,17 +111,61 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
             suffix="€"
             step={100}
           />
-          <NumberField
-            label="Loyer mensuel"
-            value={financing.monthlyPayment}
-            onChange={(v) => onFinancingChange({ ...financing, monthlyPayment: v })}
-            suffix="€/mois"
-          />
+
+          {financing.mode === 'loa' && financing.autoCalculate ? (
+            <div className="flex flex-col gap-1 text-sm">
+              <span className="font-medium text-slate-700 dark:text-slate-300">Loyer mensuel (calculé)</span>
+              <div className="rounded-md border border-dashed border-indigo-300 bg-indigo-50 px-2.5 py-1.5 text-slate-700 dark:border-indigo-700 dark:bg-indigo-950 dark:text-slate-200">
+                {formatEuro(
+                  estimateLoaMonthlyPayment({
+                    purchasePrice,
+                    firstPayment: financing.firstPayment,
+                    buybackValue: financing.buybackValue,
+                    annualInterestRatePct: financing.annualInterestRatePct,
+                    contractDurationMonths: financing.contractDurationMonths,
+                  }),
+                )}
+                /mois
+              </div>
+              <span className="text-xs text-slate-400 dark:text-slate-500">
+                Estimation à partir du prix, de l'option d'achat, du taux et de la durée.
+              </span>
+            </div>
+          ) : (
+            <NumberField
+              label="Loyer mensuel"
+              value={financing.monthlyPayment}
+              onChange={(v) => onFinancingChange({ ...financing, monthlyPayment: v })}
+              suffix="€/mois"
+            />
+          )}
+
+          {financing.mode === 'loa' && (
+            <>
+              <CheckboxField
+                label="Calculer automatiquement le loyer"
+                checked={financing.autoCalculate}
+                onChange={(v) => onFinancingChange({ ...financing, autoCalculate: v })}
+                help="À partir du prix, du taux d'intérêt, de l'option d'achat et de la durée, plutôt que saisi à la main."
+              />
+              {financing.autoCalculate && (
+                <NumberField
+                  label="Taux d'intérêt annuel"
+                  value={financing.annualInterestRatePct}
+                  onChange={(v) => onFinancingChange({ ...financing, annualInterestRatePct: v })}
+                  suffix="%"
+                  step={0.1}
+                />
+              )}
+            </>
+          )}
+
           <NumberField
             label="Durée du contrat"
             value={financing.contractDurationMonths}
-            onChange={(v) => onFinancingChange({ ...financing, contractDurationMonths: v })}
+            onChange={(v) => onFinancingChange({ ...financing, contractDurationMonths: Math.max(1, v) })}
             suffix="mois"
+            min={1}
           />
           <NumberField
             label="Kilométrage contractuel annuel"
@@ -117,6 +173,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
             onChange={(v) => onFinancingChange({ ...financing, contractualAnnualMileageKm: v })}
             suffix="km/an"
             step={1000}
+            help="Le forfait km/an prévu au contrat — un dépassement déclenche le coût ci-dessous."
           />
           <NumberField
             label="Coût du dépassement kilométrique"
@@ -138,6 +195,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
             value={financing.restitutionFees}
             onChange={(v) => onFinancingChange({ ...financing, restitutionFees: v })}
             suffix="€"
+            help="Frais facturés au retour du véhicule en fin de contrat (hors levée d'option)."
           />
           <CheckboxField
             label="Entretien inclus dans le loyer"
@@ -163,6 +221,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
                   { value: 'renew', label: 'Reconduire un nouveau contrat' },
                   { value: 'return', label: 'Restituer le véhicule' },
                 ]}
+                help="La levée d'option n'est prise en compte que si la durée de détention tombe exactement en fin de contrat."
               />
               {financing.endOfContractAction === 'buyout' && (
                 <>
@@ -172,6 +231,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
                     onChange={(v) => onFinancingChange({ ...financing, buybackValue: v })}
                     suffix="€"
                     step={100}
+                    help="Prix à payer pour devenir propriétaire à la fin du contrat."
                   />
                   <NumberField
                     label="Valeur de revente estimée après rachat"
@@ -193,6 +253,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
                 { value: 'renew', label: 'Reconduire un nouveau contrat' },
                 { value: 'return', label: 'Restituer le véhicule' },
               ]}
+              help="La LDD ne propose pas d'option d'achat, contrairement à la LOA."
             />
           )}
         </>

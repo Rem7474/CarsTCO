@@ -126,6 +126,8 @@ describe('computeVehicleResult — LOA financing', () => {
       endOfContractAction: 'buyout',
       buybackValue: 10000,
       estimatedResaleValueAfterBuyout: 9000,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
     }
     const vehicle = baseVehicle({ financing })
     const result = computeVehicleResult(vehicle, 3, 15000) // 36 months, matches contract exactly
@@ -151,6 +153,8 @@ describe('computeVehicleResult — LOA financing', () => {
       endOfContractAction: 'buyout',
       buybackValue: 10000,
       estimatedResaleValueAfterBuyout: 9000,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
     }
     const vehicle = baseVehicle({ financing })
     const result = computeVehicleResult(vehicle, 4, 15000) // 48 months: 2 contracts, remainder 12mo
@@ -174,11 +178,39 @@ describe('computeVehicleResult — LOA financing', () => {
       endOfContractAction: 'return',
       buybackValue: 0,
       estimatedResaleValueAfterBuyout: 0,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
     }
     const vehicle = baseVehicle({ financing })
     const result = computeVehicleResult(vehicle, 3, 15000) // 5,000 km/an over contract for 3 years
 
     expect(result.breakdown.financement).toBeCloseTo(15000 * 0.1, 6) // 15,000 excess km * 0.1€/km
+  })
+
+  it('uses the auto-calculated monthly payment instead of the manual one when autoCalculate is on', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 3000,
+      monthlyPayment: 999999, // deliberately wrong — should be ignored when autoCalculate is true
+      contractDurationMonths: 37,
+      contractualAnnualMileageKm: 12000,
+      excessMileageCostPerKm: 0.08,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 0,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      endOfContractAction: 'renew',
+      buybackValue: 16500,
+      estimatedResaleValueAfterBuyout: 15000,
+      autoCalculate: true,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ purchasePrice: 38000, financing })
+    const result = computeVehicleResult(vehicle, 3, 12000)
+
+    // Sanity check: financement cost must be far lower than if the bogus manual payment had been used.
+    const bogusFinancementIfManualWereUsed = 3000 + 999999 * 36
+    expect(result.breakdown.financement).toBeLessThan(bogusFinancementIfManualWereUsed / 100)
   })
 })
 

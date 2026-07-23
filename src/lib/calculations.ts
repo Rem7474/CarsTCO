@@ -5,6 +5,7 @@ import type {
   VehicleConfig,
   VehicleResult,
 } from '../types/scenario'
+import { estimateLoaMonthlyPayment } from './loaEstimate'
 
 /** Standard amortizing loan monthly payment. */
 function loanMonthlyPayment(principal: number, annualRatePct: number, months: number): number {
@@ -65,11 +66,23 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
   }
 
   // LOA / LDD (lease-style financing)
-  const numContracts = Math.max(1, Math.ceil(totalMonths / f.contractDurationMonths))
-  const remainderMonths = totalMonths % f.contractDurationMonths
+  const contractDurationMonths = Math.max(1, f.contractDurationMonths)
+  const numContracts = Math.max(1, Math.ceil(totalMonths / contractDurationMonths))
+  const remainderMonths = totalMonths % contractDurationMonths
   const endsOnBoundary = remainderMonths === 0
 
-  let financementCost = f.firstPayment * numContracts + f.monthlyPayment * totalMonths
+  const effectiveMonthlyPayment =
+    f.mode === 'loa' && f.autoCalculate
+      ? estimateLoaMonthlyPayment({
+          purchasePrice: vehicle.purchasePrice,
+          firstPayment: f.firstPayment,
+          buybackValue: f.buybackValue,
+          annualInterestRatePct: f.annualInterestRatePct,
+          contractDurationMonths,
+        })
+      : f.monthlyPayment
+
+  let financementCost = f.firstPayment * numContracts + effectiveMonthlyPayment * totalMonths
 
   // Mileage cost is computed separately by computeLeaseMileageCost() since it
   // needs annualMileageKm, which is not part of the vehicle/financing config.
@@ -151,6 +164,7 @@ function computeEnergyCost(vehicle: VehicleConfig, holdingYears: number, annualM
 }
 
 function computeTiresCost(vehicle: VehicleConfig, totalKm: number): number {
+  if (vehicle.tireLifespanKm <= 0) return 0
   const replacements = Math.floor(totalKm / vehicle.tireLifespanKm)
   return replacements * vehicle.tireSetPrice
 }

@@ -53,3 +53,18 @@ input[type="number"]::-webkit-inner-spin-button {
 input[type="number"] {
   appearance: textfield;
 }
+
+@media print {
+  :root {
+    color-scheme: light;
+    --chart-surface: #ffffff;
+    --chart-text-primary: #0b0b0b;
+    --chart-text-secondary: #52514e;
+    --chart-muted: #898781;
+    --chart-grid: #e1e0d9;
+    --chart-axis: #c3c2b7;
+  }
+  body {
+    background: #fff !important;
+  }
+}

@@ -1,78 +1,88 @@
-# CarsTCO
+<div align="center">
 
-Comparateur de coût total de possession (TCO) pour deux véhicules — thermique
-et/ou électrique — avec quatre modes de financement (achat comptant, crédit,
-LOA, LDD/LLD).
+# 🚗⚡ CarsTCO
 
-Tous les calculs s'exécutent côté client : aucune donnée n'est envoyée à un
-serveur, tout est recalculé en temps réel à chaque changement de paramètre.
+**Combien coûte vraiment votre prochaine voiture, une fois qu'on a tout compté ?**
 
-## Fonctionnalités
+Comparez en quelques clics le **coût total de possession** (TCO) de deux
+véhicules — électrique, thermique, ou les deux — sur la durée que vous gardez
+réellement votre voiture, avec le mode de financement que vous envisagez.
 
-- Deux véhicules comparables indépendamment (énergie, financement, usage).
-- 4 modes d'acquisition : achat comptant, crédit classique, LOA, LDD/LLD, avec
-  gestion du dépassement kilométrique, de la fin de contrat (reconduction,
-  levée d'option, restitution) et des postes déjà inclus dans le loyer.
-- Décomposition des coûts par poste (financement, énergie, entretien, pneus,
-  assurance, fiscalité) sous forme de graphique empilé.
-- Graphique de seuil de rentabilité (coût cumulé vs kilométrage annuel ou vs
-  durée de détention).
-- Sauvegarde automatique du scénario en local (`localStorage`), export/import
-  JSON, et partage par lien (paramètres encodés dans l'URL).
+### 👉 [**carstco.remcorp.fr**](https://carstco.remcorp.fr) 👈
 
-## Développement
+</div>
 
-```bash
-npm install
-npm run dev      # serveur de développement
-npm run build    # build de production (tsc + vite build)
-npm run lint     # oxlint
-```
+<br>
 
-## Structure
+<img src="docs/screenshots/results.png" alt="Tableau de synthèse et graphiques CarsTCO" width="100%">
 
-- `src/types/scenario.ts` — modèle de données du scénario.
-- `src/lib/calculations.ts` — moteur de calcul du TCO par véhicule.
-- `src/lib/breakeven.ts` — analyse de sensibilité (kilométrage / durée).
-- `src/data/defaults.ts` — valeurs par défaut (marché français 2026).
-- `src/components/form/` — formulaire de saisie par section.
-- `src/components/results/` — tableau de synthèse et graphiques.
+## Pourquoi cet outil ?
 
-## CI/CD
+Le prix affiché chez le concessionnaire ne dit presque rien du coût réel
+d'une voiture sur 3, 5 ou 8 ans. Entre le financement (comptant, crédit, LOA,
+LDD), l'énergie, l'entretien, les pneus, l'assurance, le bonus/malus et la
+revente, deux véhicules au même prix catalogue peuvent avoir un TCO très
+différent — et le classement peut même s'inverser selon votre kilométrage
+annuel.
 
-- `.github/workflows/ci.yml` — lint, typecheck, tests et build sur chaque push
-  vers `main` et chaque pull request.
-- `.github/workflows/deploy.yml` — build puis déploiement sur GitHub Pages à
-  chaque push sur `main`.
+CarsTCO fait ce calcul à votre place, **en direct** : vous ajustez un
+paramètre, tous les résultats se recalculent instantanément, sans bouton
+« Calculer ».
 
-### Domaine personnalisé (carstco.remcorp.fr)
+## Ce que vous pouvez comparer
 
-Le site est servi sur `carstco.remcorp.fr` via un fichier `public/CNAME`
-(copié tel quel dans `dist/` à chaque build, donc redéployé automatiquement).
-Pour que ça fonctionne, deux réglages sont nécessaires en dehors de ce repo :
+- 🔀 **De 2 à 6 véhicules, librement configurables** — thermique vs
+  électrique, ou n'importe quelle autre combinaison (ex. thermique vs
+  électrique en LOA vs électrique comptant), ajoutés/retirés à la volée
+- 🚗 **Modèles types présélectionnables** (citadine essence/électrique,
+  berline diesel/hybride, SUV essence/électrique...) pour préremplir un
+  véhicule en un clic, à ajuster ensuite librement
+- 💳 **4 modes d'acquisition indépendants par véhicule** : achat comptant,
+  crédit classique, LOA, LDD/LLD — avec gestion du dépassement kilométrique,
+  de la fin de contrat (reconduction, levée d'option, restitution) et des
+  postes déjà inclus dans le loyer (pas de double comptage entretien/assurance)
+- 🧮 **Calcul automatique du loyer LOA** à partir du prix, de l'option
+  d'achat, du taux d'intérêt et de la durée — ou saisie manuelle
+- ⛽🔋 **Énergie réaliste** : consommation, prix carburant ou électricité
+  (avec répartition domicile / recharge publique pour l'électrique), et
+  inflation annuelle en option
+- 🔧 Entretien, pneus (calculés au kilomètre), assurance
+- 🇫🇷 **Fiscalité française** : malus écologique/au poids, bonus écologique,
+  carte grise
+- 📉 Décote / valeur de revente en fin de détention
+- ⚠️ **Alertes de cohérence** : l'outil signale les saisies suspectes (taux
+  aberrant, revente supérieure au prix d'achat, forfait kilométrique très
+  éloigné de votre usage réel...)
 
-1. **DNS** — chez le registrar/gestionnaire DNS de `remcorp.fr`, ajouter un
-   enregistrement `CNAME` :
-   - Nom/hôte : `carstco`
-   - Valeur/cible : `rem7474.github.io.` (avec le point final)
-   - TTL : valeur par défaut (ex. 3600)
-2. **GitHub** — dans *Settings → Pages* du repo :
-   - Source : `GitHub Actions` (déjà utilisé par `deploy.yml`)
-   - Custom domain : `carstco.remcorp.fr` (normalement pré-rempli
-     automatiquement à partir du fichier `CNAME` après le premier déploiement
-     réussi ; sinon le saisir manuellement puis Save)
-   - Cocher **Enforce HTTPS** une fois que GitHub a fini de provisionner le
-     certificat (peut prendre jusqu'à 24h après la propagation DNS)
+## Ce que vous obtenez
 
-## Hypothèses de calcul notables
+- **Coût total**, coût mensuel moyen et coût au kilomètre pour chaque véhicule
+- Un **tableau de synthèse** qui met en évidence le véhicule le plus économique
+- Un **comparatif du coût d'usage pur** (énergie + pneus aux 100 km),
+  indépendant du mode de financement choisi
+- Un **graphique de décomposition des coûts** par poste (financement, énergie,
+  entretien, pneus, assurance, fiscalité)
+- Un **graphique de seuil de rentabilité** : à partir de quel kilométrage
+  annuel (ou de quelle durée de détention) un véhicule devient plus
+  intéressant que les autres
+- Un **export impression / PDF** de la synthèse, prêt à partager
 
-- En LOA/LDD, le bonus/malus écologique et la carte grise sont supposés déjà
-  répercutés dans le loyer et ne sont donc pas recomptés.
-- Les postes "entretien" et "assurance" peuvent être marqués comme inclus dans
-  le loyer pour éviter un double comptage.
-- Le coût du dépassement kilométrique en LOA/LDD est calculé de façon linéaire
-  sur toute la durée de détention plutôt que contrat par contrat.
-- Si la durée de détention dépasse la durée du contrat LOA/LDD, plusieurs
-  contrats successifs sont simulés (reconduction) ; en LOA, une levée
-  d'option n'est appliquée que si la détention se termine exactement à la fin
-  d'un contrat.
+<img src="docs/screenshots/mobile.png" alt="CarsTCO sur mobile" width="280">
+
+## Vos données restent chez vous
+
+Tout tourne dans votre navigateur — aucun calcul, aucune donnée n'est envoyée
+à un serveur.
+
+- Le scénario en cours est **sauvegardé automatiquement** (dans votre
+  navigateur) pour ne rien perdre en rechargeant la page
+- **Exportez/importez** un scénario au format JSON pour le garder ou le
+  réutiliser
+- **Partagez un lien** : tous les paramètres sont encodés dans l'URL, la
+  personne qui l'ouvre voit exactement le même scénario
+
+## Envie de contribuer ou de faire tourner le projet en local ?
+
+Toute la partie technique (stack, structure du code, hypothèses de calcul,
+CI/CD, déploiement) est documentée séparément dans
+[`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md).

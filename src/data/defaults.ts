@@ -68,6 +68,8 @@ export function createFinancingDefaults(mode: FinancingMode, purchasePrice: numb
         endOfContractAction: 'buyout',
         buybackValue: Math.round(purchasePrice * 0.45),
         estimatedResaleValueAfterBuyout: Math.round(purchasePrice * 0.4),
+        autoCalculate: false,
+        annualInterestRatePct: 4,
       }
       return financing
     }
@@ -136,6 +138,8 @@ export function createDefaultElectricVehicle(): VehicleConfig {
     endOfContractAction: 'buyout',
     buybackValue: 16500,
     estimatedResaleValueAfterBuyout: 15000,
+    autoCalculate: false,
+    annualInterestRatePct: 4,
   }
   return {
     id: 'vehicleB',
@@ -165,7 +169,22 @@ export function createDefaultScenario(): ScenarioConfig {
   return {
     holdingYears: 5,
     annualMileageKm: 12000,
-    vehicleA: createDefaultThermalVehicle(),
-    vehicleB: createDefaultElectricVehicle(),
+    vehicles: [createDefaultThermalVehicle(), createDefaultElectricVehicle()],
+  }
+}
+
+export const MAX_VEHICLES = 6
+export const MIN_VEHICLES = 2
+
+function generateVehicleId(): string {
+  return `veh-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+}
+
+/** Builds a new vehicle for the "add vehicle" action, seeded from an existing one so it starts from a plausible baseline. */
+export function createVehicleVariant(basedOn: VehicleConfig, label: string): VehicleConfig {
+  return {
+    ...basedOn,
+    id: generateVehicleId(),
+    label,
   }
 }

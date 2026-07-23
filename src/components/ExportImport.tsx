@@ -38,7 +38,7 @@ export function ExportImport({ scenario, onImport }: Props) {
         onImport(parsed)
         setImportError(null)
       } else {
-        setImportError('Fichier JSON invalide.')
+        setImportError("Ce fichier ne ressemble pas à un scénario CarsTCO valide.")
       }
     }
     reader.readAsText(file)
@@ -48,20 +48,20 @@ export function ExportImport({ scenario, onImport }: Props) {
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <button
-        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         onClick={() => downloadScenarioAsJson(scenario)}
       >
         Exporter (JSON)
       </button>
       <button
-        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
         onClick={handleImportClick}
       >
         Importer (JSON)
       </button>
       <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileChange} />
       <button
-        className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 font-medium text-indigo-700 shadow-sm hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
+        className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 font-medium text-indigo-700 shadow-sm hover:bg-indigo-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
         onClick={handleShare}
       >
         {copied ? 'Lien copié !' : 'Partager le scénario'}

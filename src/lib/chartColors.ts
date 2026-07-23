@@ -28,6 +28,23 @@ export const CATEGORY_ORDER: CostCategory[] = [
   'fiscalite',
 ]
 
-/** Vehicle identity colors, fixed regardless of which one is cheaper. */
-export const VEHICLE_COLOR_A = 'var(--series-1)'
-export const VEHICLE_COLOR_B = 'var(--series-2)'
+/**
+ * Vehicle identity colors, assigned by position (1st vehicle added, 2nd, ...) and fixed
+ * regardless of which one is cheapest. Same validated adjacent-pair order as the category
+ * palette; a comparison beyond 8 vehicles would need a new set, which is why the UI caps
+ * the vehicle count (see MAX_VEHICLES).
+ */
+export const VEHICLE_COLORS = [
+  'var(--series-1)',
+  'var(--series-2)',
+  'var(--series-3)',
+  'var(--series-4)',
+  'var(--series-5)',
+  'var(--series-6)',
+  'var(--series-7)',
+  'var(--series-8)',
+]
+
+export function getVehicleColor(index: number): string {
+  return VEHICLE_COLORS[index % VEHICLE_COLORS.length]
+}

@@ -7,6 +7,7 @@ import {
   loadScenarioFromUrl,
   parseScenarioFromJsonText,
   saveScenarioToLocalStorage,
+  validateScenario,
 } from './persistence'
 import { createDefaultScenario } from '../data/defaults'
 
@@ -32,7 +33,7 @@ describe('localStorage persistence', () => {
 describe('URL param encoding', () => {
   it('round-trips a scenario (including accented labels) through encode/decode', () => {
     const scenario = createDefaultScenario()
-    scenario.vehicleA.label = 'Citadine électrique éàç'
+    scenario.vehicles[0].label = 'Citadine électrique éàç'
 
     const encoded = encodeScenarioToUrlParam(scenario)
     const decoded = decodeScenarioFromUrlParam(encoded)
@@ -75,5 +76,42 @@ describe('parseScenarioFromJsonText', () => {
 
   it('returns null for invalid JSON instead of throwing', () => {
     expect(parseScenarioFromJsonText('{not json')).toBeNull()
+  })
+
+  it('returns null for well-formed JSON that is not a valid scenario (regression: used to crash the app)', () => {
+    expect(parseScenarioFromJsonText(JSON.stringify({ foo: 'bar', holdingYears: 'abc' }))).toBeNull()
+  })
+})
+
+describe('validateScenario', () => {
+  it('accepts a well-formed scenario', () => {
+    const scenario = createDefaultScenario()
+    expect(validateScenario(scenario)).toEqual(scenario)
+  })
+
+  it('migrates the legacy { vehicleA, vehicleB } shape to { vehicles: [...] }', () => {
+    const scenario = createDefaultScenario()
+    const [vehicleA, vehicleB] = scenario.vehicles
+    const legacy = { holdingYears: scenario.holdingYears, annualMileageKm: scenario.annualMileageKm, vehicleA, vehicleB }
+
+    expect(validateScenario(legacy)).toEqual(scenario)
+  })
+
+  it('rejects non-object input', () => {
+    expect(validateScenario(null)).toBeNull()
+    expect(validateScenario('scenario')).toBeNull()
+    expect(validateScenario(42)).toBeNull()
+  })
+
+  it('rejects a scenario with fewer than 2 vehicles', () => {
+    const scenario = createDefaultScenario()
+    expect(validateScenario({ ...scenario, vehicles: [scenario.vehicles[0]] })).toBeNull()
+  })
+
+  it('rejects a scenario where a vehicle is missing required fields', () => {
+    const scenario = createDefaultScenario()
+    const brokenVehicle = { ...scenario.vehicles[0] } as Record<string, unknown>
+    delete brokenVehicle.financing
+    expect(validateScenario({ ...scenario, vehicles: [brokenVehicle, scenario.vehicles[1]] })).toBeNull()
   })
 })

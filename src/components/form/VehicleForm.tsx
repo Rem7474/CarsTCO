@@ -1,13 +1,18 @@
 import type { EnergyType, VehicleConfig } from '../../types/scenario'
 import { createEnergyDefaults } from '../../data/defaults'
+import { VEHICLE_TEMPLATES } from '../../data/vehicleTemplates'
+import { getVehicleWarnings } from '../../lib/validation'
 import { NumberField, Section, SelectField, TextField } from './Field'
 import { FinancingFields } from './FinancingFields'
 import { EnergyFields } from './EnergyFields'
 
 interface Props {
   vehicle: VehicleConfig
-  accentClass: string
+  accentColor: string
+  holdingYears: number
+  annualMileageKm: number
   onChange: (updater: (v: VehicleConfig) => VehicleConfig) => void
+  onRemove?: () => void
 }
 
 const ENERGY_OPTIONS: { value: EnergyType; label: string }[] = [
@@ -15,12 +20,29 @@ const ENERGY_OPTIONS: { value: EnergyType; label: string }[] = [
   { value: 'electric', label: 'Électrique' },
 ]
 
-export function VehicleForm({ vehicle, accentClass, onChange }: Props) {
+const TEMPLATE_PLACEHOLDER = '__custom__'
+const TEMPLATE_OPTIONS = [
+  { value: TEMPLATE_PLACEHOLDER, label: '— Modèle type (optionnel) —' },
+  ...VEHICLE_TEMPLATES.map((t) => ({ value: t.id, label: t.label })),
+]
+
+export function VehicleForm({ vehicle, accentColor, holdingYears, annualMileageKm, onChange, onRemove }: Props) {
   const isLease = vehicle.financing.mode === 'loa' || vehicle.financing.mode === 'ldd'
+  const warnings = getVehicleWarnings(vehicle, { holdingYears, annualMileageKm })
+
+  const handleTemplateChange = (templateId: string) => {
+    if (templateId === TEMPLATE_PLACEHOLDER) return
+    const template = VEHICLE_TEMPLATES.find((t) => t.id === templateId)
+    if (!template) return
+    onChange((veh) => template.apply(veh.id))
+  }
 
   return (
     <div className="flex flex-col gap-3">
-      <div className={`rounded-lg border-l-4 ${accentClass} bg-white px-4 py-3 shadow-sm dark:bg-slate-900`}>
+      <div
+        className="rounded-lg border-l-4 bg-white px-4 py-3 shadow-sm dark:bg-slate-900"
+        style={{ borderLeftColor: accentColor }}
+      >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <TextField label="Nom du véhicule" value={vehicle.label} onChange={(v) => onChange((veh) => ({ ...veh, label: v }))} />
           <SelectField
@@ -35,8 +57,38 @@ export function VehicleForm({ vehicle, accentClass, onChange }: Props) {
             }
             options={ENERGY_OPTIONS}
           />
+          <div className="sm:col-span-2">
+            <SelectField
+              label="Partir d'un modèle type"
+              value={TEMPLATE_PLACEHOLDER}
+              onChange={handleTemplateChange}
+              options={TEMPLATE_OPTIONS}
+              help="Préremplit tous les champs de ce véhicule à partir d'un profil type — à ajuster ensuite librement."
+            />
+          </div>
         </div>
+        {onRemove && (
+          <button
+            className="mt-3 rounded text-xs font-medium text-slate-400 hover:text-red-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-slate-500 dark:hover:text-red-400"
+            onClick={onRemove}
+          >
+            Retirer ce véhicule de la comparaison
+          </button>
+        )}
       </div>
+
+      {warnings.length > 0 && (
+        <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200">
+          <p className="mb-1 flex items-center gap-1.5 font-semibold">
+            <span aria-hidden="true">⚠️</span> Incohérences potentielles
+          </p>
+          <ul className="list-disc space-y-0.5 pl-5">
+            {warnings.map((w) => (
+              <li key={w}>{w}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <Section title="Financement">
         <FinancingFields
@@ -82,9 +134,10 @@ export function VehicleForm({ vehicle, accentClass, onChange }: Props) {
         <NumberField
           label="Durée de vie des pneus"
           value={vehicle.tireLifespanKm}
-          onChange={(v) => onChange((veh) => ({ ...veh, tireLifespanKm: v }))}
+          onChange={(v) => onChange((veh) => ({ ...veh, tireLifespanKm: Math.max(1, v) }))}
           suffix="km"
           step={1000}
+          min={1000}
         />
       </Section>
 
