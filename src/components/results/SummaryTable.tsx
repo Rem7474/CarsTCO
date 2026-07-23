@@ -33,7 +33,7 @@ export function SummaryTable({ vehicles, results }: Props) {
 
   return (
     <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
-      <table className="w-full min-w-[420px] border-collapse text-sm">
+      <table aria-label="Tableau de synthèse" className="w-full min-w-[420px] border-collapse text-sm">
         <thead>
           <tr className="border-b border-slate-200 dark:border-slate-700">
             <th className="px-3 py-2.5 text-left font-semibold text-slate-800 dark:text-slate-100">Poste</th>

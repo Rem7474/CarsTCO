@@ -9,6 +9,7 @@ import { ExportImport } from './components/ExportImport'
 import { ConfirmDialog } from './components/ConfirmDialog'
 import { VehicleForm } from './components/form/VehicleForm'
 import { SummaryTable } from './components/results/SummaryTable'
+import { UsageCostTable } from './components/results/UsageCostTable'
 
 const CostBreakdownChart = lazy(() =>
   import('./components/results/CostBreakdownChart').then((m) => ({ default: m.CostBreakdownChart })),
@@ -121,6 +122,8 @@ function App() {
               key={vehicle.id}
               vehicle={vehicle}
               accentColor={getVehicleColor(i)}
+              holdingYears={scenario.holdingYears}
+              annualMileageKm={scenario.annualMileageKm}
               onChange={(updater) => updateVehicle(vehicle.id, updater)}
               onRemove={scenario.vehicles.length > MIN_VEHICLES ? () => removeVehicle(vehicle.id) : undefined}
             />
@@ -145,6 +148,11 @@ function App() {
         <section className="flex flex-col gap-4">
           <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">Résultats</h2>
           <SummaryTable vehicles={scenario.vehicles} results={results} />
+          <UsageCostTable
+            vehicles={scenario.vehicles}
+            results={results}
+            totalKm={scenario.holdingYears * scenario.annualMileageKm}
+          />
           <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
             <Suspense fallback={<ChartSkeleton />}>
               <CostBreakdownChart vehicles={scenario.vehicles} results={results} />
