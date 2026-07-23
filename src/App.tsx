@@ -3,11 +3,12 @@ import type { ScenarioConfig, VehicleConfig } from './types/scenario'
 import { createDefaultScenario, createVehicleVariant, MAX_VEHICLES, MIN_VEHICLES } from './data/defaults'
 import { computeVehicleResult } from './lib/calculations'
 import { loadScenarioFromLocalStorage, loadScenarioFromUrl, saveScenarioToLocalStorage } from './lib/persistence'
-import { getVehicleColor } from './lib/chartColors'
 import { ScenarioSettings } from './components/ScenarioSettings'
 import { ExportImport } from './components/ExportImport'
 import { ConfirmDialog } from './components/ConfirmDialog'
+import { LiveComparisonRibbon } from './components/LiveComparisonRibbon'
 import { VehicleForm } from './components/form/VehicleForm'
+import { ResultsOverview } from './components/results/ResultsOverview'
 import { SummaryTable } from './components/results/SummaryTable'
 import { UsageCostTable } from './components/results/UsageCostTable'
 
@@ -20,7 +21,7 @@ const BreakEvenChart = lazy(() =>
 
 function ChartSkeleton() {
   return (
-    <div className="flex h-[320px] items-center justify-center rounded-lg border border-slate-200 bg-white text-sm text-slate-400 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-500">
+    <div className="flex h-[320px] items-center justify-center rounded-2xl border border-border bg-white text-sm text-muted-2 shadow-sm">
       Chargement du graphique…
     </div>
   )
@@ -29,6 +30,9 @@ function ChartSkeleton() {
 function initialScenario(): ScenarioConfig {
   return loadScenarioFromUrl() ?? loadScenarioFromLocalStorage() ?? createDefaultScenario()
 }
+
+const headerButtonClass =
+  'rounded-[10px] border border-border bg-white px-3.5 py-2 text-[13.5px] font-semibold text-ink-soft shadow-sm hover:bg-panel focus:outline-none focus-visible:ring-2 focus-visible:ring-teal'
 
 function App() {
   const [scenario, setScenario] = useState<ScenarioConfig>(initialScenario)
@@ -67,25 +71,36 @@ function App() {
     })
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 print:bg-white print:text-slate-900">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 print:hidden">
-        <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-lg font-bold text-slate-900 dark:text-white">CarsTCO</h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Comparateur de coût total de possession — Électrique vs Thermique
-            </p>
+    <div className="min-h-screen bg-cream font-sans text-ink print:bg-white">
+      <header className="sticky top-0 z-20 border-b border-border bg-white print:hidden">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-teal font-display text-lg font-extrabold text-white">
+              C
+            </div>
+            <div>
+              <h1 className="font-display text-[19px] font-extrabold leading-tight text-ink">CarsTCO</h1>
+              <p className="text-[12.5px] text-muted">Coût total de possession — Électrique vs Thermique</p>
+            </div>
           </div>
+          <nav className="flex items-center gap-5 text-sm font-semibold text-muted">
+            <a href="#usage" className="text-muted hover:text-teal">
+              Usage
+            </a>
+            <a href="#vehicules" className="text-muted hover:text-teal">
+              Véhicules
+            </a>
+            <a href="#resultats" className="text-muted hover:text-teal">
+              Résultats
+            </a>
+          </nav>
           <div className="flex flex-wrap items-center gap-2">
             <ExportImport scenario={scenario} onImport={setScenario} />
-            <button
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-              onClick={() => window.print()}
-            >
+            <button className={headerButtonClass} onClick={() => window.print()}>
               Imprimer / PDF
             </button>
             <button
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="rounded px-1.5 text-[13px] font-semibold text-muted underline-offset-2 hover:text-red-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
               onClick={() => setResetDialogOpen(true)}
             >
               Réinitialiser
@@ -93,6 +108,8 @@ function App() {
           </div>
         </div>
       </header>
+
+      <LiveComparisonRibbon vehicles={scenario.vehicles} results={results} />
 
       <ConfirmDialog
         open={resetDialogOpen}
@@ -106,64 +123,74 @@ function App() {
         onCancel={() => setResetDialogOpen(false)}
       />
 
-      <main className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5">
-        <div className="print:hidden">
+      <main className="mx-auto flex max-w-6xl flex-col gap-9 px-4 py-8 pb-16">
+        <section id="usage" className="print:hidden">
           <ScenarioSettings
             holdingYears={scenario.holdingYears}
             annualMileageKm={scenario.annualMileageKm}
             onHoldingYearsChange={(v) => setScenario((s) => ({ ...s, holdingYears: Math.max(1, v) }))}
             onAnnualMileageChange={(v) => setScenario((s) => ({ ...s, annualMileageKm: Math.max(0, v) }))}
           />
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 print:hidden">
-          {scenario.vehicles.map((vehicle, i) => (
-            <VehicleForm
-              key={vehicle.id}
-              vehicle={vehicle}
-              accentColor={getVehicleColor(i)}
-              holdingYears={scenario.holdingYears}
-              annualMileageKm={scenario.annualMileageKm}
-              onChange={(updater) => updateVehicle(vehicle.id, updater)}
-              onRemove={scenario.vehicles.length > MIN_VEHICLES ? () => removeVehicle(vehicle.id) : undefined}
-            />
-          ))}
-        </div>
+        <section id="vehicules" className="flex flex-col gap-4 print:hidden">
+          <div>
+            <h2 className="font-display text-[19px] font-bold text-ink">Véhicules comparés</h2>
+            <p className="text-[13.5px] text-muted">
+              Thermique, électrique, ou les deux — configurez librement chaque véhicule.
+            </p>
+          </div>
 
-        <div className="print:hidden">
+          <div className="grid grid-cols-1 items-start gap-5 lg:grid-cols-2">
+            {scenario.vehicles.map((vehicle) => (
+              <VehicleForm
+                key={vehicle.id}
+                vehicle={vehicle}
+                holdingYears={scenario.holdingYears}
+                annualMileageKm={scenario.annualMileageKm}
+                onChange={(updater) => updateVehicle(vehicle.id, updater)}
+                onRemove={scenario.vehicles.length > MIN_VEHICLES ? () => removeVehicle(vehicle.id) : undefined}
+              />
+            ))}
+          </div>
+
           <button
-            className="rounded-md border border-dashed border-slate-300 px-4 py-2 text-sm font-medium text-slate-600 hover:border-indigo-400 hover:text-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+            className="self-start rounded-[14px] border-[1.5px] border-dashed border-dash px-5 py-3 text-sm font-bold text-muted hover:border-teal hover:text-teal focus:outline-none focus-visible:ring-2 focus-visible:ring-teal disabled:cursor-not-allowed disabled:opacity-50"
             onClick={addVehicle}
             disabled={scenario.vehicles.length >= MAX_VEHICLES}
           >
             + Ajouter un véhicule à comparer
           </button>
           {scenario.vehicles.length >= MAX_VEHICLES && (
-            <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
-              Maximum {MAX_VEHICLES} véhicules pour garder les graphiques lisibles.
-            </p>
+            <p className="-mt-2 text-xs text-muted-2">Maximum {MAX_VEHICLES} véhicules pour garder les graphiques lisibles.</p>
           )}
-        </div>
+        </section>
 
-        <section className="flex flex-col gap-4">
-          <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">Résultats</h2>
-          <SummaryTable vehicles={scenario.vehicles} results={results} />
+        <section id="resultats" className="flex flex-col gap-[18px]">
+          <div>
+            <h2 className="font-display text-[19px] font-bold text-ink">Résultats</h2>
+            <p className="text-[13.5px] text-muted">
+              Sur {scenario.holdingYears} ans et {(scenario.holdingYears * scenario.annualMileageKm).toLocaleString('fr-FR')} km
+              — synthèse, coût d'usage pur et seuil de rentabilité.
+            </p>
+          </div>
+
+          <ResultsOverview vehicles={scenario.vehicles} results={results} />
+          <Suspense fallback={<ChartSkeleton />}>
+            <CostBreakdownChart vehicles={scenario.vehicles} results={results} />
+          </Suspense>
           <UsageCostTable
             vehicles={scenario.vehicles}
             results={results}
             totalKm={scenario.holdingYears * scenario.annualMileageKm}
           />
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-            <Suspense fallback={<ChartSkeleton />}>
-              <CostBreakdownChart vehicles={scenario.vehicles} results={results} />
-            </Suspense>
-            <Suspense fallback={<ChartSkeleton />}>
-              <BreakEvenChart scenario={scenario} />
-            </Suspense>
-          </div>
+          <Suspense fallback={<ChartSkeleton />}>
+            <BreakEvenChart scenario={scenario} />
+          </Suspense>
+          <SummaryTable vehicles={scenario.vehicles} results={results} />
         </section>
 
-        <footer className="py-6 text-center text-xs text-slate-400 dark:text-slate-500 print:hidden">
+        <footer className="pt-3 text-center text-xs text-muted-2 print:hidden">
           Valeurs par défaut indicatives (marché français 2026) — ajustez chaque hypothèse selon votre situation.
         </footer>
       </main>

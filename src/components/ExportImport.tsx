@@ -45,28 +45,25 @@ export function ExportImport({ scenario, onImport }: Props) {
     e.target.value = ''
   }
 
+  const outlineButtonClass =
+    'rounded-[10px] border border-border bg-white px-3.5 py-2 text-[13.5px] font-semibold text-ink-soft shadow-sm hover:bg-panel focus:outline-none focus-visible:ring-2 focus-visible:ring-teal'
+
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
-      <button
-        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-        onClick={() => downloadScenarioAsJson(scenario)}
-      >
-        Exporter (JSON)
+      <button className={outlineButtonClass} onClick={() => downloadScenarioAsJson(scenario)}>
+        Exporter
       </button>
-      <button
-        className="rounded-md border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-700 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
-        onClick={handleImportClick}
-      >
-        Importer (JSON)
+      <button className={outlineButtonClass} onClick={handleImportClick}>
+        Importer
       </button>
       <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileChange} />
       <button
-        className="rounded-md border border-indigo-300 bg-indigo-50 px-3 py-1.5 font-medium text-indigo-700 shadow-sm hover:bg-indigo-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:border-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 dark:hover:bg-indigo-900"
+        className="rounded-[10px] border-none bg-teal px-4 py-[9px] text-[13.5px] font-bold text-white shadow-sm hover:bg-teal-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-dark"
         onClick={handleShare}
       >
         {copied ? 'Lien copié !' : 'Partager le scénario'}
       </button>
-      {importError && <span className="text-xs text-red-600 dark:text-red-400">{importError}</span>}
+      {importError && <span className="text-xs text-red-text">{importError}</span>}
     </div>
   )
 }
