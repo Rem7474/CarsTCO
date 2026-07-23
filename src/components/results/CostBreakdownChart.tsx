@@ -4,10 +4,8 @@ import { CATEGORY_COLORS, CATEGORY_LABELS, CATEGORY_ORDER } from '../../lib/char
 import { formatEuro } from '../../lib/format'
 
 interface Props {
-  vehicleA: VehicleConfig
-  vehicleB: VehicleConfig
-  resultA: VehicleResult
-  resultB: VehicleResult
+  vehicles: VehicleConfig[]
+  results: VehicleResult[]
 }
 
 interface TooltipPayloadItem {
@@ -42,18 +40,16 @@ function ChartTooltip({ active, payload, label }: { active?: boolean; payload?: 
   )
 }
 
-export function CostBreakdownChart({ vehicleA, vehicleB, resultA, resultB }: Props) {
-  const data = [
-    { name: vehicleA.label, ...resultA.breakdown },
-    { name: vehicleB.label, ...resultB.breakdown },
-  ]
+export function CostBreakdownChart({ vehicles, results }: Props) {
+  const data = vehicles.map((vehicle, i) => ({ name: vehicle.label, ...results[i].breakdown }))
+  const height = Math.max(240, 90 + vehicles.length * 80)
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900">
       <h3 className="mb-3 text-sm font-semibold text-slate-800 dark:text-slate-100">
         Décomposition des coûts par poste
       </h3>
-      <ResponsiveContainer width="100%" height={340}>
+      <ResponsiveContainer width="100%" height={height}>
         <BarChart data={data} layout="vertical" margin={{ top: 0, right: 24, left: 0, bottom: 0 }} barGap={2}>
           <CartesianGrid strokeDasharray="0" horizontal={false} stroke="var(--chart-grid)" />
           <XAxis

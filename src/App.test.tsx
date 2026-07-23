@@ -49,4 +49,20 @@ describe('App', () => {
 
     expect(totalAfter).not.toEqual(totalBefore)
   })
+
+  it('supports adding and removing vehicles beyond the default two', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+
+    await user.click(screen.getByRole('button', { name: /Ajouter un véhicule/ }))
+
+    const table = screen.getByRole('table')
+    expect(within(table).getAllByRole('columnheader')).toHaveLength(4) // Poste + 3 vehicles
+
+    const removeButtons = screen.getAllByRole('button', { name: /Retirer ce véhicule/ })
+    expect(removeButtons).toHaveLength(3)
+    await user.click(removeButtons[0])
+
+    expect(within(screen.getByRole('table')).getAllByRole('columnheader')).toHaveLength(3) // back to 2 vehicles
+  })
 })

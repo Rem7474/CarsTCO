@@ -80,8 +80,7 @@ export interface VehicleConfig {
 export interface ScenarioConfig {
   holdingYears: number
   annualMileageKm: number
-  vehicleA: VehicleConfig
-  vehicleB: VehicleConfig
+  vehicles: VehicleConfig[]
 }
 
 export type CostCategory =

@@ -6,8 +6,9 @@ import { EnergyFields } from './EnergyFields'
 
 interface Props {
   vehicle: VehicleConfig
-  accentClass: string
+  accentColor: string
   onChange: (updater: (v: VehicleConfig) => VehicleConfig) => void
+  onRemove?: () => void
 }
 
 const ENERGY_OPTIONS: { value: EnergyType; label: string }[] = [
@@ -15,12 +16,15 @@ const ENERGY_OPTIONS: { value: EnergyType; label: string }[] = [
   { value: 'electric', label: 'Électrique' },
 ]
 
-export function VehicleForm({ vehicle, accentClass, onChange }: Props) {
+export function VehicleForm({ vehicle, accentColor, onChange, onRemove }: Props) {
   const isLease = vehicle.financing.mode === 'loa' || vehicle.financing.mode === 'ldd'
 
   return (
     <div className="flex flex-col gap-3">
-      <div className={`rounded-lg border-l-4 ${accentClass} bg-white px-4 py-3 shadow-sm dark:bg-slate-900`}>
+      <div
+        className="rounded-lg border-l-4 bg-white px-4 py-3 shadow-sm dark:bg-slate-900"
+        style={{ borderLeftColor: accentColor }}
+      >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <TextField label="Nom du véhicule" value={vehicle.label} onChange={(v) => onChange((veh) => ({ ...veh, label: v }))} />
           <SelectField
@@ -36,6 +40,14 @@ export function VehicleForm({ vehicle, accentClass, onChange }: Props) {
             options={ENERGY_OPTIONS}
           />
         </div>
+        {onRemove && (
+          <button
+            className="mt-3 text-xs font-medium text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
+            onClick={onRemove}
+          >
+            Retirer ce véhicule de la comparaison
+          </button>
+        )}
       </div>
 
       <Section title="Financement">
