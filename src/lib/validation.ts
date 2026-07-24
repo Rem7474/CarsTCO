@@ -40,14 +40,18 @@ export function getVehicleWarnings(vehicle: VehicleConfig, usage: UsageContext):
     if (f.firstPayment > vehicle.purchasePrice) {
       warnings.push('Le premier loyer dépasse le prix catalogue.')
     }
-    const endsWithBuyoutOnBoundary =
-      f.mode === 'loa' &&
-      f.endOfContractAction === 'buyout' &&
-      (usage.holdingYears * 12) % Math.max(1, f.contractDurationMonths) === 0
+
+    const contractDurationMonths = Math.max(1, f.contractDurationMonths)
+    const totalMonths = usage.holdingYears * 12
+    const isBuyout = f.mode === 'loa' && f.endOfContractAction === 'buyout'
+    // A buyout reaching at least one full contract term ends the lease for good — no
+    // restitution ever happens, whether it lands exactly on the contract boundary or
+    // partway through ownership afterward (mid-holding buyout, see calculations.ts).
+    const buyoutWaivesMileageCheck = isBuyout && totalMonths >= contractDurationMonths
 
     if (f.contractualAnnualMileageKm > 0 && usage.annualMileageKm > 0) {
       const ratio = usage.annualMileageKm / f.contractualAnnualMileageKm
-      if (ratio > 1.5 && !endsWithBuyoutOnBoundary) {
+      if (ratio > 1.5 && !buyoutWaivesMileageCheck) {
         warnings.push(
           `Le kilométrage réel (${fmt(usage.annualMileageKm)} km/an) dépasse largement le forfait contractuel ` +
             `(${fmt(f.contractualAnnualMileageKm)} km/an) — des frais de dépassement importants sont à prévoir.`,
@@ -59,11 +63,19 @@ export function getVehicleWarnings(vehicle: VehicleConfig, usage: UsageContext):
         )
       }
     }
-    const numContracts = Math.ceil((usage.holdingYears * 12) / Math.max(1, f.contractDurationMonths))
-    if (numContracts >= 3) {
+
+    if (isBuyout && totalMonths < contractDurationMonths) {
       warnings.push(
-        `La durée de détention implique ${numContracts} contrats successifs simulés — vérifiez que c'est bien votre intention.`,
+        "La durée de détention se termine avant la fin du contrat LOA : l'option d'achat ne peut pas être levée — " +
+          'une restitution est simulée à la place.',
       )
+    } else if (!isBuyout || totalMonths === contractDurationMonths) {
+      const numContracts = Math.ceil(totalMonths / contractDurationMonths)
+      if (numContracts >= 3) {
+        warnings.push(
+          `La durée de détention implique ${numContracts} contrats successifs simulés — vérifiez que c'est bien votre intention.`,
+        )
+      }
     }
   }
 

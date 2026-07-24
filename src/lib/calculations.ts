@@ -36,6 +36,13 @@ interface FinancingResult {
   insuranceIncluded: boolean
   /** False when the vehicle is bought out at the end of its LOA (no restitution, so no mileage check-out). */
   mileagePenaltyApplies: boolean
+  /**
+   * Months, at the tail end of the holding period, during which the lessee owns the
+   * vehicle outright after exercising a LOA buyout mid-holding. For these months,
+   * `maintenanceIncluded`/`insuranceIncluded` no longer apply even if true, since
+   * there's no more lease covering them. Zero outside of that scenario.
+   */
+  ownerPaidMonths: number
   notes: string[]
 }
 
@@ -47,7 +54,15 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
   if (f.mode === 'cash') {
     const financementCost = vehicle.purchasePrice - f.resaleValueAtEnd
     const fiscaliteCost = f.carteGriseCost + vehicle.fiscal.malus - vehicle.fiscal.bonus
-    return { financementCost, fiscaliteCost, maintenanceIncluded: false, insuranceIncluded: false, mileagePenaltyApplies: false, notes }
+    return {
+      financementCost,
+      fiscaliteCost,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      mileagePenaltyApplies: false,
+      ownerPaidMonths: 0,
+      notes,
+    }
   }
 
   if (f.mode === 'credit') {
@@ -64,14 +79,19 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
     }
     financementCost -= f.resaleValueAtEnd
     const fiscaliteCost = f.carteGriseCost + vehicle.fiscal.malus - vehicle.fiscal.bonus
-    return { financementCost, fiscaliteCost, maintenanceIncluded: false, insuranceIncluded: false, mileagePenaltyApplies: false, notes }
+    return {
+      financementCost,
+      fiscaliteCost,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      mileagePenaltyApplies: false,
+      ownerPaidMonths: 0,
+      notes,
+    }
   }
 
   // LOA / LDD (lease-style financing)
   const contractDurationMonths = Math.max(1, f.contractDurationMonths)
-  const numContracts = Math.max(1, Math.ceil(totalMonths / contractDurationMonths))
-  const remainderMonths = totalMonths % contractDurationMonths
-  const endsOnBoundary = remainderMonths === 0
 
   const effectiveMonthlyPayment =
     f.mode === 'loa' && f.autoCalculate
@@ -83,6 +103,47 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
           contractDurationMonths,
         })
       : f.monthlyPayment
+
+  // Carte grise is assumed already embedded in the lease payment (registered to the
+  // lessor), but malus/bonus écologique are real cash flows for the lessee — in
+  // practice they're usually netted against the first payment/apport by the dealer.
+  const fiscaliteCost = vehicle.fiscal.malus - vehicle.fiscal.bonus
+  notes.push(
+    'LOA/LDD : la carte grise est supposée déjà incluse dans le loyer ; le bonus/malus écologique est compté ' +
+      'séparément (en pratique souvent déduit/ajouté directement sur le premier loyer par le concessionnaire).',
+  )
+
+  // A buyout ends the lease relationship for good: the lessee purchases the vehicle at
+  // the end of a single contract term and owns it outright afterward — it never renews
+  // into a second lease. Modeled independently of the renewal path below whenever the
+  // holding period actually reaches a full contract term.
+  if (f.mode === 'loa' && f.endOfContractAction === 'buyout' && totalMonths > contractDurationMonths) {
+    const ownerPaidMonths = totalMonths - contractDurationMonths
+    const financementCost =
+      f.firstPayment + effectiveMonthlyPayment * contractDurationMonths + f.buybackValue - f.estimatedResaleValueAfterBuyout
+    notes.push(
+      `LOA : option d'achat levée à la fin du contrat de ${contractDurationMonths} mois ; véhicule conservé en ` +
+        `pleine propriété pour les ${ownerPaidMonths} mois restants de la détention (entretien/assurance à charge du ` +
+        `propriétaire sur cette période), revente estimée appliquée en fin de détention. Aucun frais de dépassement ` +
+        'kilométrique (pas de restitution).',
+    )
+    return {
+      financementCost,
+      fiscaliteCost,
+      maintenanceIncluded: f.maintenanceIncluded,
+      insuranceIncluded: f.insuranceIncluded,
+      mileagePenaltyApplies: false,
+      ownerPaidMonths,
+      notes,
+    }
+  }
+
+  // Renewal path: the lessee keeps re-leasing (at the same simulated terms) through the
+  // whole holding period — applies to 'renew', 'return', LDD (no buyout option), and a
+  // buyout requested before the first contract term even completes (nothing to buy yet).
+  const numContracts = Math.max(1, Math.ceil(totalMonths / contractDurationMonths))
+  const remainderMonths = totalMonths % contractDurationMonths
+  const endsOnBoundary = remainderMonths === 0
 
   let financementCost = f.firstPayment * numContracts + effectiveMonthlyPayment * totalMonths
 
@@ -109,21 +170,12 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
     } else {
       financementCost += f.restitutionFees
       notes.push(
-        "La durée de détention ne tombe pas sur une fin de contrat : rachat non applicable, restitution simulée à la place.",
+        "Le contrat n'est pas terminé à la fin de la période de détention : rachat impossible, restitution simulée à la place.",
       )
     }
   } else if (f.endOfContractAction === 'return') {
     financementCost += f.restitutionFees
   }
-
-  // Carte grise is assumed already embedded in the lease payment (registered to the
-  // lessor), but malus/bonus écologique are real cash flows for the lessee — in
-  // practice they're usually netted against the first payment/apport by the dealer.
-  const fiscaliteCost = vehicle.fiscal.malus - vehicle.fiscal.bonus
-  notes.push(
-    'LOA/LDD : la carte grise est supposée déjà incluse dans le loyer ; le bonus/malus écologique est compté ' +
-      'séparément (en pratique souvent déduit/ajouté directement sur le premier loyer par le concessionnaire).',
-  )
 
   return {
     financementCost,
@@ -131,6 +183,7 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
     maintenanceIncluded: f.maintenanceIncluded,
     insuranceIncluded: f.insuranceIncluded,
     mileagePenaltyApplies,
+    ownerPaidMonths: 0,
     notes,
   }
 }
@@ -202,16 +255,28 @@ export function computeVehicleResult(
 
   const energieCost = computeEnergyCost(vehicle, holdingYears, annualMileageKm)
 
-  const entretienCost = financing.maintenanceIncluded ? 0 : vehicle.maintenanceAnnualCost * holdingYears
+  const entretienCost = financing.maintenanceIncluded
+    ? vehicle.maintenanceAnnualCost * (financing.ownerPaidMonths / 12)
+    : vehicle.maintenanceAnnualCost * holdingYears
   if (financing.maintenanceIncluded) {
-    notes.push("Entretien inclus dans le loyer (non recompté).")
+    notes.push(
+      financing.ownerPaidMonths > 0
+        ? `Entretien inclus dans le loyer pendant le contrat ; recompté pour les ${financing.ownerPaidMonths} mois de pleine propriété après le rachat.`
+        : "Entretien inclus dans le loyer (non recompté).",
+    )
   }
 
   const pneusCost = computeTiresCost(vehicle, totalKm)
 
-  const assuranceCost = financing.insuranceIncluded ? 0 : vehicle.insuranceAnnualPremium * holdingYears
+  const assuranceCost = financing.insuranceIncluded
+    ? vehicle.insuranceAnnualPremium * (financing.ownerPaidMonths / 12)
+    : vehicle.insuranceAnnualPremium * holdingYears
   if (financing.insuranceIncluded) {
-    notes.push("Assurance incluse dans le loyer (non recomptée).")
+    notes.push(
+      financing.ownerPaidMonths > 0
+        ? `Assurance incluse dans le loyer pendant le contrat ; recomptée pour les ${financing.ownerPaidMonths} mois de pleine propriété après le rachat.`
+        : "Assurance incluse dans le loyer (non recomptée).",
+    )
   }
 
   const fiscaliteCost = financing.fiscaliteCost

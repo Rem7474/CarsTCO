@@ -61,6 +61,18 @@ export function ResultsOverview({ vehicles, results }: Props) {
                   coût au kilomètre
                 </div>
               </div>
+              {result.notes.length > 0 && (
+                <details className="mt-3.5 border-t border-border-soft pt-2.5 text-[12px] text-muted-2">
+                  <summary className="cursor-pointer select-none font-semibold text-muted hover:text-ink">
+                    Comment ce montant a été calculé
+                  </summary>
+                  <ul className="mt-2 list-disc space-y-1 pl-4">
+                    {result.notes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </details>
+              )}
             </div>
           )
         })}

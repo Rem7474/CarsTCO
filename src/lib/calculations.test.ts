@@ -162,7 +162,7 @@ describe('computeVehicleResult — LOA financing', () => {
     expect(result.breakdown.fiscalite).toBe(-3000)
   })
 
-  it('falls back to restitution fees when a buyout is requested off a contract boundary', () => {
+  it('exercises the buyout at the end of the first contract when holding continues past it, then owns the vehicle outright', () => {
     const financing: LoaFinancing = {
       mode: 'loa',
       firstPayment: 2000,
@@ -181,10 +181,62 @@ describe('computeVehicleResult — LOA financing', () => {
       annualInterestRatePct: 4,
     }
     const vehicle = baseVehicle({ financing })
-    const result = computeVehicleResult(vehicle, 4, 15000) // 48 months: 2 contracts, remainder 12mo
+    const result = computeVehicleResult(vehicle, 4, 15000) // 48 months: 36-month contract, then 12 months owned outright
 
-    expect(result.breakdown.financement).toBeCloseTo(2000 * 2 + 300 * 48 + 250, 6)
-    expect(result.notes.some((n) => n.includes('rachat non applicable'))).toBe(true)
+    // firstPayment + 36 monthly payments (only for the contract term) + buyback - resale-after-buyout.
+    // No restitution fees, no mileage excess: the vehicle is bought out, never handed back.
+    expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 36 + 10000 - 9000, 6)
+    expect(result.notes.some((n) => n.includes("option d'achat levée à la fin du contrat"))).toBe(true)
+  })
+
+  it('charges maintenance/insurance only for the ownership months after a mid-holding buyout, when included in the loyer', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 1000,
+      monthlyPayment: 250,
+      contractDurationMonths: 36,
+      contractualAnnualMileageKm: 15000,
+      excessMileageCostPerKm: 0.1,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 200,
+      maintenanceIncluded: true,
+      insuranceIncluded: true,
+      endOfContractAction: 'buyout',
+      buybackValue: 8000,
+      estimatedResaleValueAfterBuyout: 7000,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ financing, maintenanceAnnualCost: 600, insuranceAnnualPremium: 900 })
+    const result = computeVehicleResult(vehicle, 5, 15000) // 60 months: 36 under lease + 24 owned outright
+
+    expect(result.breakdown.entretien).toBeCloseTo(600 * (24 / 12), 6)
+    expect(result.breakdown.assurance).toBeCloseTo(900 * (24 / 12), 6)
+  })
+
+  it('still falls back to restitution fees when the LOA contract never finishes within the holding period', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 2000,
+      monthlyPayment: 300,
+      contractDurationMonths: 48,
+      contractualAnnualMileageKm: 15000,
+      excessMileageCostPerKm: 0.1,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 250,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      endOfContractAction: 'buyout',
+      buybackValue: 10000,
+      estimatedResaleValueAfterBuyout: 9000,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ financing })
+    const result = computeVehicleResult(vehicle, 3, 15000) // 36 months held, 48-month contract never finishes
+
+    expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 36 + 250, 6)
+    expect(result.notes.some((n) => n.includes("n'est pas terminé"))).toBe(true)
   })
 
   it('charges for mileage driven beyond the contractual allowance', () => {

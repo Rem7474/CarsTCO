@@ -127,12 +127,40 @@ describe('computeMonthlySchedule — parity with computeVehicleResult', () => {
     expect(breakdown.financement).toBeCloseTo(aggregate.breakdown.financement, 6)
   })
 
-  it('matches the aggregate for LOA with a buyout off a contract boundary (restitution + mileage instead)', () => {
+  it('matches the aggregate for LOA with a mid-holding buyout (contract shorter than the holding period)', () => {
     const financing: LoaFinancing = {
       mode: 'loa',
       firstPayment: 2000,
       monthlyPayment: 300,
       contractDurationMonths: 37,
+      contractualAnnualMileageKm: 12000,
+      excessMileageCostPerKm: 0.08,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 150,
+      maintenanceIncluded: true,
+      insuranceIncluded: true,
+      endOfContractAction: 'buyout',
+      buybackValue: 9000,
+      estimatedResaleValueAfterBuyout: 8000,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ financing })
+    const aggregate = computeVehicleResult(vehicle, 4, 18000) // 48 months: 37-month contract, then 11 months owned outright
+    const { totalCost, breakdown } = sumSchedule(vehicle, 4, 18000)
+
+    expect(totalCost).toBeCloseTo(aggregate.totalCost, 6)
+    expect(breakdown.financement).toBeCloseTo(aggregate.breakdown.financement, 6)
+    expect(breakdown.entretien).toBeCloseTo(aggregate.breakdown.entretien, 6)
+    expect(breakdown.assurance).toBeCloseTo(aggregate.breakdown.assurance, 6)
+  })
+
+  it('matches the aggregate for LOA with a buyout requested but the contract never finishes within the holding period', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 2000,
+      monthlyPayment: 300,
+      contractDurationMonths: 48,
       contractualAnnualMileageKm: 12000,
       excessMileageCostPerKm: 0.08,
       underMileageRefundPerKm: 0,
@@ -146,8 +174,8 @@ describe('computeMonthlySchedule — parity with computeVehicleResult', () => {
       annualInterestRatePct: 4,
     }
     const vehicle = baseVehicle({ financing })
-    const aggregate = computeVehicleResult(vehicle, 4, 18000) // 48 months, not a multiple of 37
-    const { totalCost, breakdown } = sumSchedule(vehicle, 4, 18000)
+    const aggregate = computeVehicleResult(vehicle, 3, 18000) // 36 months held, 48-month contract never finishes
+    const { totalCost, breakdown } = sumSchedule(vehicle, 3, 18000)
 
     expect(totalCost).toBeCloseTo(aggregate.totalCost, 6)
     expect(breakdown.financement).toBeCloseTo(aggregate.breakdown.financement, 6)
