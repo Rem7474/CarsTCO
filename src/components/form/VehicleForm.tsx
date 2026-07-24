@@ -191,16 +191,9 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
       </div>
 
       <div className="px-[22px] pt-4">
-        <div className="mb-2 flex items-center gap-1.5">
+        <div className="mb-1 flex items-start border-b border-border-soft pb-3.5">
           {STEPS.map((s, i) => (
-            <StepDot key={s.key} index={i} step={step} accent={accent} onSelect={() => setStep(i)} isLast={i === STEPS.length - 1} />
-          ))}
-        </div>
-        <div className="flex justify-between border-b border-border-soft pb-3.5 text-[10.5px] text-muted-2">
-          {STEPS.map((s, i) => (
-            <span key={s.key} style={i === step ? { color: accent.base, fontWeight: 700 } : undefined}>
-              {s.label}
-            </span>
+            <StepDot key={s.key} index={i} step={step} accent={accent} onSelect={() => setStep(i)} isLast={i === STEPS.length - 1} label={s.label} />
           ))}
         </div>
       </div>
@@ -391,12 +384,14 @@ function StepDot({
   accent,
   onSelect,
   isLast,
+  label,
 }: {
   index: number
   step: number
   accent: { base: string }
   onSelect: () => void
   isLast: boolean
+  label: string
 }) {
   const state = index < step ? 'done' : index === step ? 'current' : 'pending'
   return (
@@ -404,19 +399,28 @@ function StepDot({
       <button
         type="button"
         onClick={onSelect}
-        aria-label={`Aller à l'étape ${index + 1} : ${STEPS[index].label}`}
         aria-current={state === 'current' ? 'step' : undefined}
-        className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[11.5px] font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
-        style={
-          state === 'pending'
-            ? { border: '1.5px solid #D3CBB4', color: '#9A927E', background: 'transparent' }
-            : { background: accent.base, color: '#fff' }
-        }
+        className="flex flex-1 flex-col items-center gap-1 rounded-lg py-0.5 text-center hover:bg-panel focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
       >
-        {index + 1}
+        <span
+          className="flex h-[22px] w-[22px] shrink-0 items-center justify-center rounded-full text-[11.5px] font-bold"
+          style={
+            state === 'pending'
+              ? { border: '1.5px solid #D3CBB4', color: '#9A927E', background: 'transparent' }
+              : { background: accent.base, color: '#fff' }
+          }
+        >
+          {index + 1}
+        </span>
+        <span
+          className="text-[10.5px] text-muted-2"
+          style={state === 'current' ? { color: accent.base, fontWeight: 700 } : undefined}
+        >
+          {label}
+        </span>
       </button>
       {!isLast && (
-        <div className="h-[2px] flex-1" style={{ background: index < step ? accent.base : '#E6DFCD' }} />
+        <div className="mt-[10px] h-[2px] w-3 shrink-0" style={{ background: index < step ? accent.base : '#E6DFCD' }} />
       )}
     </>
   )
