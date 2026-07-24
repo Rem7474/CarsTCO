@@ -114,7 +114,10 @@ function applyFinancingSchedule(
     for (let m = 1; m <= contractDurationMonths; m++) {
       at(m, 'financement', effectiveMonthlyPayment)
     }
-    at(contractDurationMonths, 'financement', f.buybackValue - f.estimatedResaleValueAfterBuyout)
+    // The buyout is paid at the end of the LOA contract; the resale credit only happens
+    // when the vehicle is actually sold, at the end of the holding period being simulated.
+    at(contractDurationMonths, 'financement', f.buybackValue)
+    at(totalMonths, 'financement', -f.estimatedResaleValueAfterBuyout)
     return {
       maintenanceIncluded: f.maintenanceIncluded,
       insuranceIncluded: f.insuranceIncluded,
