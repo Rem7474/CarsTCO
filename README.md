@@ -26,8 +26,7 @@ différent — et le classement peut même s'inverser selon votre kilométrage
 annuel.
 
 CarsTCO fait ce calcul à votre place, **en direct** : vous ajustez un
-paramètre, tous les résultats se recalculent instantanément, sans bouton
-« Calculer ».
+paramètre, tous les résultats se recalculent instantanément.
 
 ## Ce que vous pouvez comparer
 
