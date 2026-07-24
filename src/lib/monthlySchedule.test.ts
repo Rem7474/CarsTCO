@@ -155,6 +155,42 @@ describe('computeMonthlySchedule — parity with computeVehicleResult', () => {
     expect(breakdown.assurance).toBeCloseTo(aggregate.breakdown.assurance, 6)
   })
 
+  it('books the buyout payment at the end of the LOA contract, and the resale credit at the end of the holding period', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 2000,
+      monthlyPayment: 300,
+      contractDurationMonths: 36,
+      contractualAnnualMileageKm: 12000,
+      excessMileageCostPerKm: 0.08,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 150,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      endOfContractAction: 'buyout',
+      buybackValue: 9000,
+      estimatedResaleValueAfterBuyout: 8000,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ financing })
+    // 60 months held, 36-month contract: bought out at month 36, resold at month 60.
+    const { years } = sumSchedule(vehicle, 5, 15000)
+    const monthByIndex = years.flatMap((y) => y.months)
+
+    const buyoutMonth = monthByIndex[35] // month 36
+    const lastMonth = monthByIndex[59] // month 60
+    expect(buyoutMonth.breakdown.financement).toBeCloseTo(300 + 9000, 6) // last monthly payment + buyback
+    expect(lastMonth.breakdown.financement).toBeCloseTo(-8000, 6) // resale credit only, no lease payment left
+
+    // No other month carries either lump sum.
+    for (let i = 0; i < monthByIndex.length; i++) {
+      if (i === 35 || i === 59) continue
+      expect(monthByIndex[i].breakdown.financement).not.toBeCloseTo(300 + 9000, 6)
+      expect(monthByIndex[i].breakdown.financement).not.toBeCloseTo(-8000, 6)
+    }
+  })
+
   it('matches the aggregate for LOA with a buyout requested but the contract never finishes within the holding period', () => {
     const financing: LoaFinancing = {
       mode: 'loa',
