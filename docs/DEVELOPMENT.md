@@ -9,6 +9,10 @@ React + TypeScript + Vite, Tailwind CSS v4, Recharts. Aucun backend : tous
 les calculs et la persistance (localStorage, export/import JSON, URL) sont
 côté client.
 
+Node.js `^20.19.0 || >=22.12.0` requis (contrainte de Vite 8, voir le champ
+`engines` de `package.json`) — avec une version antérieure, `npm run test`
+et `npm run lint` échouent avec des erreurs de binding natif peu explicites.
+
 ## Développement
 
 ```bash
@@ -24,7 +28,14 @@ npm run test:watch  # vitest en mode watch
 ## Structure
 
 - `src/types/scenario.ts` — modèle de données du scénario.
-- `src/lib/calculations.ts` — moteur de calcul du TCO par véhicule.
+- `src/lib/calculations.ts` — moteur de calcul du TCO par véhicule (totaux
+  agrégés sur toute la durée de détention).
+- `src/lib/monthlySchedule.ts` — étale les mêmes coûts sur une frise
+  mensuelle/annuelle (flux de trésorerie réel : apport, loyers, pneus,
+  revente... aux mois où ils tombent réellement ; énergie/entretien/
+  assurance lissés sur l'année faute de date précise). La somme du calendrier
+  reproduit exactement les totaux de `calculations.ts` (voir
+  `monthlySchedule.test.ts`).
 - `src/lib/breakeven.ts` — analyse de sensibilité (kilométrage / durée).
 - `src/lib/persistence.ts` — localStorage, encodage URL, export/import JSON.
 - `src/data/defaults.ts` — valeurs par défaut (marché français 2026).

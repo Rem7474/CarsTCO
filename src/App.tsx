@@ -2,7 +2,12 @@ import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import type { ScenarioConfig, VehicleConfig } from './types/scenario'
 import { createDefaultScenario, createVehicleVariant, MAX_VEHICLES, MIN_VEHICLES } from './data/defaults'
 import { computeVehicleResult } from './lib/calculations'
-import { loadScenarioFromLocalStorage, loadScenarioFromUrl, saveScenarioToLocalStorage } from './lib/persistence'
+import {
+  clearScenarioUrlParam,
+  loadScenarioFromLocalStorage,
+  loadScenarioFromUrl,
+  saveScenarioToLocalStorage,
+} from './lib/persistence'
 import { ScenarioSettings } from './components/ScenarioSettings'
 import { ExportImport } from './components/ExportImport'
 import { ConfirmDialog } from './components/ConfirmDialog'
@@ -11,6 +16,7 @@ import { VehicleForm } from './components/form/VehicleForm'
 import { ResultsOverview } from './components/results/ResultsOverview'
 import { SummaryTable } from './components/results/SummaryTable'
 import { UsageCostTable } from './components/results/UsageCostTable'
+import { MonthlyScheduleTable } from './components/results/MonthlyScheduleTable'
 
 const CostBreakdownChart = lazy(() =>
   import('./components/results/CostBreakdownChart').then((m) => ({ default: m.CostBreakdownChart })),
@@ -37,10 +43,17 @@ const headerButtonClass =
 function App() {
   const [scenario, setScenario] = useState<ScenarioConfig>(initialScenario)
   const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [removeVehicleId, setRemoveVehicleId] = useState<string | null>(null)
 
   useEffect(() => {
     saveScenarioToLocalStorage(scenario)
   }, [scenario])
+
+  // The shared-link scenario has now been adopted into state (or discarded as invalid) —
+  // drop `?s=` so a later reload reads back localStorage instead of silently reverting to it.
+  useEffect(() => {
+    clearScenarioUrlParam()
+  }, [])
 
   const results = useMemo(
     () =>
@@ -123,6 +136,18 @@ function App() {
         onCancel={() => setResetDialogOpen(false)}
       />
 
+      <ConfirmDialog
+        open={removeVehicleId !== null}
+        title="Retirer ce véhicule ?"
+        message={`« ${scenario.vehicles.find((v) => v.id === removeVehicleId)?.label ?? ''} » sera retiré de la comparaison. Cette action est irréversible.`}
+        confirmLabel="Retirer"
+        onConfirm={() => {
+          if (removeVehicleId) removeVehicle(removeVehicleId)
+          setRemoveVehicleId(null)
+        }}
+        onCancel={() => setRemoveVehicleId(null)}
+      />
+
       <main className="mx-auto flex max-w-6xl flex-col gap-9 px-4 py-8 pb-16">
         <section id="usage" className="print:hidden">
           <ScenarioSettings
@@ -149,7 +174,7 @@ function App() {
                 holdingYears={scenario.holdingYears}
                 annualMileageKm={scenario.annualMileageKm}
                 onChange={(updater) => updateVehicle(vehicle.id, updater)}
-                onRemove={scenario.vehicles.length > MIN_VEHICLES ? () => removeVehicle(vehicle.id) : undefined}
+                onRemove={scenario.vehicles.length > MIN_VEHICLES ? () => setRemoveVehicleId(vehicle.id) : undefined}
               />
             ))}
           </div>
@@ -188,6 +213,7 @@ function App() {
             <BreakEvenChart scenario={scenario} />
           </Suspense>
           <SummaryTable vehicles={scenario.vehicles} results={results} />
+          <MonthlyScheduleTable scenario={scenario} />
         </section>
 
         <footer className="pt-3 text-center text-xs text-muted-2 print:hidden">

@@ -65,6 +65,9 @@ paramètre, tous les résultats se recalculent instantanément, sans bouton
 - Un **graphique de seuil de rentabilité** : à partir de quel kilométrage
   annuel (ou de quelle durée de détention) un véhicule devient plus
   intéressant que les autres
+- Un **détail des dépenses par année**, dépliable mois par mois pour chaque
+  véhicule (apport/loyers, pneus, revente... aux mois où ils tombent
+  réellement)
 - Un **export impression / PDF** de la synthèse, prêt à partager
 
 <img src="docs/screenshots/mobile.png" alt="CarsTCO sur mobile" width="280">

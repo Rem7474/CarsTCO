@@ -8,7 +8,7 @@ import type {
 import { estimateLoaMonthlyPayment } from './loaEstimate'
 
 /** Standard amortizing loan monthly payment. */
-function loanMonthlyPayment(principal: number, annualRatePct: number, months: number): number {
+export function loanMonthlyPayment(principal: number, annualRatePct: number, months: number): number {
   if (months <= 0) return 0
   const r = annualRatePct / 100 / 12
   if (r === 0) return principal / months
@@ -16,7 +16,7 @@ function loanMonthlyPayment(principal: number, annualRatePct: number, months: nu
 }
 
 /** Remaining principal balance after `monthsElapsed` payments on an amortizing loan. */
-function loanRemainingBalance(
+export function loanRemainingBalance(
   principal: number,
   annualRatePct: number,
   totalMonths: number,
@@ -135,7 +135,7 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
   }
 }
 
-function computeLeaseMileageCost(vehicle: VehicleConfig, holdingYears: number, annualMileageKm: number): number {
+export function computeLeaseMileageCost(vehicle: VehicleConfig, holdingYears: number, annualMileageKm: number): number {
   const f = vehicle.financing
   if (f.mode !== 'loa' && f.mode !== 'ldd') return 0
   const totalMonths = holdingYears * 12
@@ -150,7 +150,7 @@ function computeLeaseMileageCost(vehicle: VehicleConfig, holdingYears: number, a
   return 0
 }
 
-function isElectricEnergy(
+export function isElectricEnergy(
   energyType: VehicleConfig['energyType'],
   _energy: ThermalEnergyConfig | ElectricEnergyConfig,
 ): _energy is ElectricEnergyConfig {

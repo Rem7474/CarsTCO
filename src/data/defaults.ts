@@ -94,12 +94,10 @@ export function createFinancingDefaults(mode: FinancingMode, purchasePrice: numb
 
 export function createDefaultThermalVehicle(): VehicleConfig {
   const financing: CreditFinancing = {
-    mode: 'credit',
+    ...(createFinancingDefaults('credit', 28000) as CreditFinancing),
+    // Hand-tuned to a realistic quote rather than the generic formula-based default.
     downPayment: 4000,
-    annualInterestRatePct: 5.5,
-    loanDurationMonths: 60,
     carteGriseCost: 220,
-    resaleValueAtEnd: 11200,
   }
   return {
     id: 'vehicleA',
@@ -107,11 +105,7 @@ export function createDefaultThermalVehicle(): VehicleConfig {
     energyType: 'thermal',
     purchasePrice: 28000,
     financing,
-    energy: {
-      consumptionL100km: 6.0,
-      fuelPricePerLiter: 1.85,
-      annualPriceInflationPct: 2,
-    },
+    energy: createEnergyDefaults('thermal'),
     maintenanceAnnualCost: 600,
     tireSetPrice: 480,
     tireLifespanKm: 40000,
@@ -125,21 +119,12 @@ export function createDefaultThermalVehicle(): VehicleConfig {
 
 export function createDefaultElectricVehicle(): VehicleConfig {
   const financing: LoaFinancing = {
-    mode: 'loa',
+    ...(createFinancingDefaults('loa', 38000) as LoaFinancing),
+    // Hand-tuned to a realistic LOA quote rather than the generic formula-based default.
     firstPayment: 3000,
     monthlyPayment: 349,
-    contractDurationMonths: 37,
-    contractualAnnualMileageKm: 12000,
-    excessMileageCostPerKm: 0.08,
-    underMileageRefundPerKm: 0,
-    restitutionFees: 150,
-    maintenanceIncluded: false,
-    insuranceIncluded: false,
-    endOfContractAction: 'buyout',
     buybackValue: 16500,
     estimatedResaleValueAfterBuyout: 15000,
-    autoCalculate: false,
-    annualInterestRatePct: 4,
   }
   return {
     id: 'vehicleB',
@@ -147,13 +132,7 @@ export function createDefaultElectricVehicle(): VehicleConfig {
     energyType: 'electric',
     purchasePrice: 38000,
     financing,
-    energy: {
-      consumptionKwh100km: 16,
-      homePricePerKwh: 0.2,
-      publicPricePerKwh: 0.5,
-      homeChargeSharePct: 80,
-      annualPriceInflationPct: 2,
-    },
+    energy: createEnergyDefaults('electric'),
     maintenanceAnnualCost: 300,
     tireSetPrice: 560,
     tireLifespanKm: 45000,

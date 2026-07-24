@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import type { ScenarioConfig } from '../types/scenario'
 import { buildShareUrl, downloadScenarioAsJson, parseScenarioFromJsonText } from '../lib/persistence'
+import { ConfirmDialog } from './ConfirmDialog'
 
 interface Props {
   scenario: ScenarioConfig
@@ -11,6 +12,7 @@ export function ExportImport({ scenario, onImport }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [copied, setCopied] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  const [pendingImport, setPendingImport] = useState<ScenarioConfig | null>(null)
 
   const handleShare = async () => {
     const url = buildShareUrl(scenario)
@@ -35,7 +37,7 @@ export function ExportImport({ scenario, onImport }: Props) {
     reader.onload = () => {
       const parsed = parseScenarioFromJsonText(String(reader.result))
       if (parsed) {
-        onImport(parsed)
+        setPendingImport(parsed)
         setImportError(null)
       } else {
         setImportError("Ce fichier ne ressemble pas à un scénario CarsTCO valide.")
@@ -64,6 +66,18 @@ export function ExportImport({ scenario, onImport }: Props) {
         {copied ? 'Lien copié !' : 'Partager le scénario'}
       </button>
       {importError && <span className="text-xs text-red-text">{importError}</span>}
+
+      <ConfirmDialog
+        open={pendingImport !== null}
+        title="Importer ce scénario ?"
+        message="Le scénario en cours sera remplacé par celui du fichier importé. Cette action est irréversible."
+        confirmLabel="Importer"
+        onConfirm={() => {
+          if (pendingImport) onImport(pendingImport)
+          setPendingImport(null)
+        }}
+        onCancel={() => setPendingImport(null)}
+      />
     </div>
   )
 }
