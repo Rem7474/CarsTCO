@@ -110,8 +110,9 @@ function applyFinancingSchedule(
   // A buyout ends the lease for good: pay for a single contract term, then the vehicle is
   // owned outright for the rest of the holding period — mirrors calculations.ts exactly.
   if (f.mode === 'loa' && f.endOfContractAction === 'buyout' && totalMonths > contractDurationMonths) {
+    // The first payment stands in for month 1's rent, not an additional payment on top of it.
     at(1, 'financement', f.firstPayment)
-    for (let m = 1; m <= contractDurationMonths; m++) {
+    for (let m = 2; m <= contractDurationMonths; m++) {
       at(m, 'financement', effectiveMonthlyPayment)
     }
     // The buyout is paid at the end of the LOA contract; the resale credit only happens
@@ -130,8 +131,13 @@ function applyFinancingSchedule(
   const remainderMonths = totalMonths % contractDurationMonths
   const endsOnBoundary = remainderMonths === 0
 
+  // Each contract's first payment stands in for that contract's month-1 rent, not an
+  // additional payment on top of it — so contract-start months skip the regular payment.
   for (let m = 1; m <= totalMonths; m++) {
-    at(m, 'financement', effectiveMonthlyPayment)
+    const isContractStart = (m - 1) % contractDurationMonths === 0
+    if (!isContractStart) {
+      at(m, 'financement', effectiveMonthlyPayment)
+    }
   }
   for (let k = 0; k < numContracts; k++) {
     at(1 + k * contractDurationMonths, 'financement', f.firstPayment)

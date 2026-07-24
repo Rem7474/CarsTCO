@@ -24,11 +24,11 @@ interface Props {
 
 export function FinancingFields({ purchasePrice, onPurchasePriceChange, financing, onFinancingChange, fiscal }: Props) {
   const firstPaymentHelp =
-    fiscal.bonus > 0
-      ? `Dont ${formatEuro(fiscal.bonus)} de bonus écologique, généralement déduit directement par le concessionnaire.`
+    (fiscal.bonus > 0
+      ? `Dont ${formatEuro(fiscal.bonus)} de bonus écologique, généralement déduit directement par le concessionnaire. `
       : fiscal.malus > 0
-        ? `Majoré en pratique du malus écologique (${formatEuro(fiscal.malus)}), voir la section Fiscalité ci-dessous.`
-        : undefined
+        ? `Majoré en pratique du malus écologique (${formatEuro(fiscal.malus)}), voir la section Fiscalité ci-dessous. `
+        : '') + "Tient lieu de loyer du 1er mois — pas payé en plus du loyer mensuel ce mois-là."
 
   const handleModeChange = (mode: FinancingMode) => {
     if (mode === financing.mode) return

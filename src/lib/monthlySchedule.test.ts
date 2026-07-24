@@ -241,10 +241,13 @@ describe('computeMonthlySchedule — parity with computeVehicleResult', () => {
 
     expect(totalCost).toBeCloseTo(aggregate.totalCost, 6)
     expect(breakdown.financement).toBeCloseTo(aggregate.breakdown.financement, 6)
-    // firstPayment lands on the first month of contracts starting at month 1, 25 and 49.
-    expect(years[0].months[0].breakdown.financement).toBeCloseTo(1500 + 280, 6)
-    expect(years[2].months[0].breakdown.financement).toBeCloseTo(1500 + 280, 6)
-    expect(years[4].months[0].breakdown.financement).toBeCloseTo(1500 + 280, 6)
+    // firstPayment stands in for that contract's month-1 rent (contracts start at month
+    // 1, 25 and 49) — not paid on top of the regular monthly payment.
+    expect(years[0].months[0].breakdown.financement).toBeCloseTo(1500, 6)
+    expect(years[2].months[0].breakdown.financement).toBeCloseTo(1500, 6)
+    expect(years[4].months[0].breakdown.financement).toBeCloseTo(1500, 6)
+    // The month right after each contract start is a normal, single monthly payment.
+    expect(years[0].months[1].breakdown.financement).toBeCloseTo(280, 6)
   })
 
   it('matches the aggregate for LDD with maintenance and insurance included in the lease', () => {

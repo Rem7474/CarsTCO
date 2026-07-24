@@ -132,8 +132,9 @@ describe('computeVehicleResult — LOA financing', () => {
     const vehicle = baseVehicle({ financing, fiscal: { malus: 0, bonus: 0 } })
     const result = computeVehicleResult(vehicle, 3, 15000) // 36 months, matches contract exactly
 
-    // firstPayment + 36 monthly payments + buyback - resale-after-buyout, no mileage excess (usage == contractual)
-    expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 36 + 10000 - 9000, 6)
+    // firstPayment (stands in for month 1) + 35 monthly payments + buyback - resale-after-buyout,
+    // no mileage excess (usage == contractual)
+    expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 35 + 10000 - 9000, 6)
     expect(result.notes.some((n) => n.includes("levée en fin de contrat"))).toBe(true)
     expect(result.breakdown.fiscalite).toBe(0)
   })
@@ -183,9 +184,9 @@ describe('computeVehicleResult — LOA financing', () => {
     const vehicle = baseVehicle({ financing })
     const result = computeVehicleResult(vehicle, 4, 15000) // 48 months: 36-month contract, then 12 months owned outright
 
-    // firstPayment + 36 monthly payments (only for the contract term) + buyback - resale-after-buyout.
-    // No restitution fees, no mileage excess: the vehicle is bought out, never handed back.
-    expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 36 + 10000 - 9000, 6)
+    // firstPayment (stands in for month 1) + 35 monthly payments (only for the contract term)
+    // + buyback - resale-after-buyout. No restitution fees, no mileage excess: bought out, never handed back.
+    expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 35 + 10000 - 9000, 6)
     expect(result.notes.some((n) => n.includes("option d'achat levée à la fin du contrat"))).toBe(true)
   })
 
@@ -235,7 +236,7 @@ describe('computeVehicleResult — LOA financing', () => {
     const vehicle = baseVehicle({ financing })
     const result = computeVehicleResult(vehicle, 3, 15000) // 36 months held, 48-month contract never finishes
 
-    expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 36 + 250, 6)
+    expect(result.breakdown.financement).toBeCloseTo(2000 + 300 * 35 + 250, 6)
     expect(result.notes.some((n) => n.includes("n'est pas terminé"))).toBe(true)
   })
 

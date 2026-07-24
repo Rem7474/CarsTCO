@@ -1,4 +1,5 @@
 import { computeVehicleResult } from './calculations'
+import { computeMonthlySchedule } from './monthlySchedule'
 import type { ScenarioConfig } from '../types/scenario'
 
 export interface MileagePoint {
@@ -35,16 +36,22 @@ export interface DurationPoint {
 }
 
 /**
- * Total cost of each vehicle across a range of holding durations, holding
- * annual mileage fixed. Used to see cumulative cost evolve over time.
+ * Cumulative cost of each vehicle, year by year, while actually holding it for the
+ * scenario's configured duration — the running total of the same cash-flow schedule
+ * the "Dépenses détaillées par année" table shows, not an independent re-simulation
+ * of "what if I only held it for N years". The two would otherwise disagree for LOA
+ * financing: computeVehicleResult(vehicle, N, ...) for N shorter than the contract
+ * treats it as an early termination (restitution fees, no buyout), which isn't what's
+ * actually happening at year N of a longer, ongoing lease.
  */
-export function computeCostByDuration(scenario: ScenarioConfig, maxYears = 10): DurationPoint[] {
+export function computeCostByDuration(scenario: ScenarioConfig): DurationPoint[] {
+  const schedules = scenario.vehicles.map((vehicle) =>
+    computeMonthlySchedule(vehicle, scenario.holdingYears, scenario.annualMileageKm),
+  )
   const points: DurationPoint[] = []
-  for (let years = 1; years <= maxYears; years++) {
-    const costs = scenario.vehicles.map(
-      (vehicle) => computeVehicleResult(vehicle, years, scenario.annualMileageKm).totalCost,
-    )
-    points.push({ years, costs })
+  for (let year = 1; year <= scenario.holdingYears; year++) {
+    const costs = schedules.map((schedule) => schedule[year - 1].cumulativeTotalCost)
+    points.push({ years: year, costs })
   }
   return points
 }
