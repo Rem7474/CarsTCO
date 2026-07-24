@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { computeCostByDuration, computeCostByMileage, computeLeadershipSegments, type MileagePoint } from './breakeven'
 import { computeVehicleResult } from './calculations'
+import { computeMonthlySchedule } from './monthlySchedule'
 import { createDefaultScenario } from '../data/defaults'
 
 describe('computeLeadershipSegments', () => {
@@ -60,14 +61,41 @@ describe('computeCostByMileage', () => {
 describe('computeCostByDuration', () => {
   it('matches computeVehicleResult at each sampled year, for every vehicle', () => {
     const scenario = createDefaultScenario()
-    const points = computeCostByDuration(scenario, 3)
+    scenario.holdingYears = 3
+    const points = computeCostByDuration(scenario)
 
     expect(points.map((p) => p.years)).toEqual([1, 2, 3])
     for (const p of points) {
       scenario.vehicles.forEach((vehicle, i) => {
-        const expected = computeVehicleResult(vehicle, p.years, scenario.annualMileageKm)
-        expect(p.costs[i]).toBeCloseTo(expected.totalCost, 6)
+        const schedule = computeMonthlySchedule(vehicle, scenario.holdingYears, scenario.annualMileageKm)
+        expect(p.costs[i]).toBeCloseTo(schedule[p.years - 1].cumulativeTotalCost, 6)
       })
     }
+    // The final point must also match the standalone aggregate for the full holding period.
+    const last = points.at(-1)!
+    scenario.vehicles.forEach((vehicle, i) => {
+      const expected = computeVehicleResult(vehicle, scenario.holdingYears, scenario.annualMileageKm)
+      expect(last.costs[i]).toBeCloseTo(expected.totalCost, 6)
+    })
+  })
+
+  it('reflects the running cost of an ongoing LOA lease, not an independent early-termination scenario', () => {
+    // A LOA contract longer than the elapsed year should NOT book restitution fees or an
+    // early-termination penalty at intermediate years — the lease is simply still running.
+    const scenario = createDefaultScenario()
+    scenario.holdingYears = 5
+    const electric = scenario.vehicles[1] // LOA, 37-month contract — longer than 1 year
+    const points = computeCostByDuration(scenario)
+
+    const year1Independent = computeVehicleResult(electric, 1, scenario.annualMileageKm).totalCost
+    const year1Running = points[0].costs[1]
+
+    // The independent 1-year simulation wrongly assumes the contract is being terminated
+    // early (restitution fees); the running total from the actual multi-year lease doesn't.
+    expect(year1Running).not.toBeCloseTo(year1Independent, 2)
+    expect(year1Running).toBeCloseTo(
+      computeMonthlySchedule(electric, scenario.holdingYears, scenario.annualMileageKm)[0].cumulativeTotalCost,
+      6,
+    )
   })
 })

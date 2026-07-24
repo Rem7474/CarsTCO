@@ -82,10 +82,7 @@ export function BreakEvenChart({ scenario }: Props) {
   const [mode, setMode] = useState<'mileage' | 'duration'>('mileage')
 
   const mileagePoints = useMemo(() => computeCostByMileage(scenario), [scenario])
-  // Sweep exactly through the configured holding period — not a fixed, longer default —
-  // so every point on this chart has a matching row in the yearly table below. Showing
-  // extra speculative years past the analyzed period is what made the two disagree.
-  const durationPoints = useMemo(() => computeCostByDuration(scenario, scenario.holdingYears), [scenario])
+  const durationPoints = useMemo(() => computeCostByDuration(scenario), [scenario])
   const leadershipSegments = useMemo(() => computeLeadershipSegments(mileagePoints), [mileagePoints])
   const narrative = useMemo(
     () => buildLeadershipNarrative(leadershipSegments, scenario.vehicles.map((v) => v.label), scenario.holdingYears),
