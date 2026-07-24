@@ -33,7 +33,7 @@ export function ConfirmDialog({
       ref={ref}
       onClose={onCancel}
       onCancel={onCancel}
-      className="rounded-2xl border border-border bg-white p-0 shadow-xl backdrop:bg-ink/40"
+      className="fixed inset-0 m-auto rounded-2xl border border-border bg-white p-0 shadow-xl backdrop:bg-ink/40"
     >
       <div className="w-80 p-5">
         <h2 className="font-display text-base font-bold text-ink">{title}</h2>
