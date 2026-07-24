@@ -49,6 +49,18 @@ const END_OF_CONTRACT_LABELS: Record<string, string> = {
   return: 'Restituer le véhicule',
 }
 
+/**
+ * Scrolls to `target`, clearing the sticky header. Measures the header's actual rendered
+ * height instead of a hard-coded offset, since it's a different height on mobile than desktop.
+ */
+function scrollBelowStickyHeader(target: HTMLElement | null): void {
+  if (!target) return
+  const header = document.querySelector('header')
+  const offset = (header?.getBoundingClientRect().height ?? 0) + 12
+  const top = target.getBoundingClientRect().top + window.scrollY - offset
+  window.scrollTo({ top, behavior: 'smooth' })
+}
+
 const fmtNum = (v: number, maximumFractionDigits = 1) =>
   new Intl.NumberFormat('fr-FR', { maximumFractionDigits }).format(v)
 
@@ -91,16 +103,21 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
   const isLease = vehicle.financing.mode === 'loa' || vehicle.financing.mode === 'ldd'
   const warnings = getVehicleWarnings(vehicle, { holdingYears, annualMileageKm })
 
-  const stepHeaderRef = useRef<HTMLDivElement>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
   const isFirstRender = useRef(true)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
       return
     }
-    // Step content height varies a lot (Financement vs Pneus) — anchor the view on the
-    // step header on every change so "Suivant"/"Précédent" stay at a predictable spot.
-    stepHeaderRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    // Step content height varies a lot (Financement vs Pneus) — anchor the view on every
+    // change so "Suivant"/"Précédent" stay at a predictable spot. On desktop the vehicle
+    // cards sit side by side, so re-anchoring on the whole "Véhicules" section reads better
+    // than jumping inside a single card; on mobile (single column, and the sticky header
+    // already eats vertical space) re-anchoring on this card's own top keeps it in view.
+    const isDesktop = window.matchMedia('(min-width: 1024px)').matches
+    const target = isDesktop ? document.getElementById('vehicules') : cardRef.current
+    scrollBelowStickyHeader(target)
   }, [step])
 
   const handleTemplateChange = (templateId: string) => {
@@ -114,7 +131,7 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
   const f = vehicle.financing
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-[20px] border border-border bg-white">
+    <div ref={cardRef} className="flex flex-col overflow-hidden rounded-[20px] border border-border bg-white">
       <div className="px-[22px] py-[18px]" style={{ background: accent.tint }}>
         <div className="mb-3 flex items-center justify-between gap-2.5">
           <span
@@ -189,11 +206,7 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
       </div>
 
       <div className="flex flex-col gap-3.5 px-[22px] py-5">
-        <div
-          ref={stepHeaderRef}
-          className="text-sm font-bold scroll-mt-24"
-          style={{ color: accent.deep }}
-        >
+        <div className="text-sm font-bold" style={{ color: accent.deep }}>
           Étape {step + 1} sur {STEPS.length} — {current.label}
         </div>
 

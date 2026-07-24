@@ -86,17 +86,17 @@ function App() {
   return (
     <div className="min-h-screen bg-cream font-sans text-ink print:bg-white">
       <header className="sticky top-0 z-20 border-b border-border bg-white print:hidden">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[11px] bg-teal font-display text-lg font-extrabold text-white">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 lg:gap-4 lg:py-4">
+          <div className="flex items-center gap-2.5 lg:gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-teal font-display text-base font-extrabold text-white lg:h-10 lg:w-10 lg:rounded-[11px] lg:text-lg">
               C
             </div>
             <div>
-              <h1 className="font-display text-[19px] font-extrabold leading-tight text-ink">CarsTCO</h1>
-              <p className="text-[12.5px] text-muted">Coût total de possession — Électrique vs Thermique</p>
+              <h1 className="font-display text-[16px] font-extrabold leading-tight text-ink lg:text-[19px]">CarsTCO</h1>
+              <p className="hidden text-[12.5px] text-muted sm:block">Coût total de possession — Électrique vs Thermique</p>
             </div>
           </div>
-          <nav className="flex items-center gap-5 text-sm font-semibold text-muted">
+          <nav className="hidden items-center gap-5 text-sm font-semibold text-muted lg:flex">
             <a href="#usage" className="text-muted hover:text-teal">
               Usage
             </a>
