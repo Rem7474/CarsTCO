@@ -120,8 +120,13 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
   // holding period actually reaches a full contract term.
   if (f.mode === 'loa' && f.endOfContractAction === 'buyout' && totalMonths > contractDurationMonths) {
     const ownerPaidMonths = totalMonths - contractDurationMonths
+    // The first payment (apport/premier loyer majoré) stands in for month 1's rent — it's
+    // not paid on top of it — so only contractDurationMonths - 1 regular payments follow.
     const financementCost =
-      f.firstPayment + effectiveMonthlyPayment * contractDurationMonths + f.buybackValue - f.estimatedResaleValueAfterBuyout
+      f.firstPayment +
+      effectiveMonthlyPayment * (contractDurationMonths - 1) +
+      f.buybackValue -
+      f.estimatedResaleValueAfterBuyout
     notes.push(
       `LOA : option d'achat levée à la fin du contrat de ${contractDurationMonths} mois (${formatEuro(f.buybackValue)}) ; ` +
         `véhicule conservé en pleine propriété pour les ${ownerPaidMonths} mois restants de la détention (entretien/assurance ` +
@@ -146,7 +151,9 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
   const remainderMonths = totalMonths % contractDurationMonths
   const endsOnBoundary = remainderMonths === 0
 
-  let financementCost = f.firstPayment * numContracts + effectiveMonthlyPayment * totalMonths
+  // Each contract's first payment stands in for that contract's month-1 rent, not an
+  // additional payment on top of it — so totalMonths includes numContracts "replaced" months.
+  let financementCost = f.firstPayment * numContracts + effectiveMonthlyPayment * (totalMonths - numContracts)
 
   // Mileage cost is computed separately by computeLeaseMileageCost() since it
   // needs annualMileageKm, which is not part of the vehicle/financing config.
