@@ -16,8 +16,11 @@ describe('ResultsOverview', () => {
     expect(electricResult.notes.length).toBeGreaterThan(0)
     const disclosures = screen.getAllByText('Comment ce montant a été calculé')
     expect(disclosures.length).toBeGreaterThanOrEqual(1)
+    const listItems = screen.getAllByRole('listitem').map((li) => li.textContent)
     for (const note of electricResult.notes) {
-      expect(screen.getByText(note)).toBeInTheDocument()
+      // Not screen.getByText(note): Intl.NumberFormat('fr-FR') inserts narrow no-break
+      // spaces around currency amounts that trip up dom-testing-library's text matcher.
+      expect(listItems).toContain(note)
     }
   })
 })

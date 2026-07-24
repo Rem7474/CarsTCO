@@ -6,6 +6,7 @@ import type {
   VehicleResult,
 } from '../types/scenario'
 import { estimateLoaMonthlyPayment } from './loaEstimate'
+import { formatEuro } from './format'
 
 /** Standard amortizing loan monthly payment. */
 export function loanMonthlyPayment(principal: number, annualRatePct: number, months: number): number {
@@ -122,10 +123,10 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
     const financementCost =
       f.firstPayment + effectiveMonthlyPayment * contractDurationMonths + f.buybackValue - f.estimatedResaleValueAfterBuyout
     notes.push(
-      `LOA : option d'achat levée à la fin du contrat de ${contractDurationMonths} mois ; véhicule conservé en ` +
-        `pleine propriété pour les ${ownerPaidMonths} mois restants de la détention (entretien/assurance à charge du ` +
-        `propriétaire sur cette période), revente estimée appliquée en fin de détention. Aucun frais de dépassement ` +
-        'kilométrique (pas de restitution).',
+      `LOA : option d'achat levée à la fin du contrat de ${contractDurationMonths} mois (${formatEuro(f.buybackValue)}) ; ` +
+        `véhicule conservé en pleine propriété pour les ${ownerPaidMonths} mois restants de la détention (entretien/assurance ` +
+        `à charge du propriétaire sur cette période), revente estimée de ${formatEuro(f.estimatedResaleValueAfterBuyout)} ` +
+        'appliquée en fin de détention. Aucun frais de dépassement kilométrique (pas de restitution).',
     )
     return {
       financementCost,
@@ -165,7 +166,9 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
       financementCost -= f.estimatedResaleValueAfterBuyout
       mileagePenaltyApplies = false
       notes.push(
-        "Option d'achat levée en fin de contrat, puis revente estimée immédiate prise en compte. Pas de restitution : aucun frais de dépassement kilométrique.",
+        `Option d'achat levée en fin de contrat (${formatEuro(f.buybackValue)}), puis revente estimée de ` +
+          `${formatEuro(f.estimatedResaleValueAfterBuyout)} immédiatement prise en compte. Pas de restitution : ` +
+          'aucun frais de dépassement kilométrique.',
       )
     } else {
       financementCost += f.restitutionFees
