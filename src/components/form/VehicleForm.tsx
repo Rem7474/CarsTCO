@@ -111,13 +111,11 @@ export function VehicleForm({ vehicle, holdingYears, annualMileageKm, onChange, 
       return
     }
     // Step content height varies a lot (Financement vs Pneus) — anchor the view on every
-    // change so "Suivant"/"Précédent" stay at a predictable spot. On desktop the vehicle
-    // cards sit side by side, so re-anchoring on the whole "Véhicules" section reads better
-    // than jumping inside a single card; on mobile (single column, and the sticky header
-    // already eats vertical space) re-anchoring on this card's own top keeps it in view.
-    const isDesktop = window.matchMedia('(min-width: 1024px)').matches
-    const target = isDesktop ? document.getElementById('vehicules') : cardRef.current
-    scrollBelowStickyHeader(target)
+    // change so "Suivant"/"Précédent" stay at a predictable spot. Always anchor on this
+    // card's own top: with more than 2 vehicles the grid wraps onto multiple rows, so
+    // anchoring on the whole "Véhicules" section (as opposed to this specific card) would
+    // scroll back up to the top of the grid instead of staying on the card being edited.
+    scrollBelowStickyHeader(cardRef.current)
   }, [step])
 
   const handleTemplateChange = (templateId: string) => {
