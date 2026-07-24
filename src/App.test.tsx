@@ -62,6 +62,7 @@ describe('App', () => {
     const removeButtons = screen.getAllByRole('button', { name: /Retirer ce véhicule/ })
     expect(removeButtons).toHaveLength(3)
     await user.click(removeButtons[0])
+    await user.click(screen.getByRole('button', { name: 'Retirer' }))
 
     expect(within(screen.getByRole('table', { name: 'Tableau de synthèse' })).getAllByRole('columnheader')).toHaveLength(3) // back to 2 vehicles
   })
