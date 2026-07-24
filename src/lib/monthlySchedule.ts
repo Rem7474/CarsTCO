@@ -47,6 +47,8 @@ function addBreakdowns(a: CostBreakdown, b: CostBreakdown): CostBreakdown {
 interface FinancingScheduleResult {
   maintenanceIncluded: boolean
   insuranceIncluded: boolean
+  /** See FinancingResult.ownerPaidMonths in calculations.ts. Zero outside a mid-holding LOA buyout. */
+  ownerPaidMonths: number
 }
 
 /**
@@ -68,7 +70,7 @@ function applyFinancingSchedule(
     at(1, 'financement', vehicle.purchasePrice)
     at(totalMonths, 'financement', -f.resaleValueAtEnd)
     at(1, 'fiscalite', f.carteGriseCost + vehicle.fiscal.malus - vehicle.fiscal.bonus)
-    return { maintenanceIncluded: false, insuranceIncluded: false }
+    return { maintenanceIncluded: false, insuranceIncluded: false, ownerPaidMonths: 0 }
   }
 
   if (f.mode === 'credit') {
@@ -85,14 +87,11 @@ function applyFinancingSchedule(
     }
     at(totalMonths, 'financement', -f.resaleValueAtEnd)
     at(1, 'fiscalite', f.carteGriseCost + vehicle.fiscal.malus - vehicle.fiscal.bonus)
-    return { maintenanceIncluded: false, insuranceIncluded: false }
+    return { maintenanceIncluded: false, insuranceIncluded: false, ownerPaidMonths: 0 }
   }
 
   // LOA / LDD (lease-style financing) — same branching as computeFinancing() in calculations.ts.
   const contractDurationMonths = Math.max(1, f.contractDurationMonths)
-  const numContracts = Math.max(1, Math.ceil(totalMonths / contractDurationMonths))
-  const remainderMonths = totalMonths % contractDurationMonths
-  const endsOnBoundary = remainderMonths === 0
 
   const effectiveMonthlyPayment =
     f.mode === 'loa' && f.autoCalculate
@@ -104,6 +103,29 @@ function applyFinancingSchedule(
           contractDurationMonths,
         })
       : f.monthlyPayment
+
+  // Carte grise assumed included in the lease; malus/bonus counted separately, on the first payment.
+  at(1, 'fiscalite', vehicle.fiscal.malus - vehicle.fiscal.bonus)
+
+  // A buyout ends the lease for good: pay for a single contract term, then the vehicle is
+  // owned outright for the rest of the holding period — mirrors calculations.ts exactly.
+  if (f.mode === 'loa' && f.endOfContractAction === 'buyout' && totalMonths > contractDurationMonths) {
+    at(1, 'financement', f.firstPayment)
+    for (let m = 1; m <= contractDurationMonths; m++) {
+      at(m, 'financement', effectiveMonthlyPayment)
+    }
+    at(contractDurationMonths, 'financement', f.buybackValue - f.estimatedResaleValueAfterBuyout)
+    return {
+      maintenanceIncluded: f.maintenanceIncluded,
+      insuranceIncluded: f.insuranceIncluded,
+      ownerPaidMonths: totalMonths - contractDurationMonths,
+    }
+  }
+
+  // Renewal path — see calculations.ts for the full rationale.
+  const numContracts = Math.max(1, Math.ceil(totalMonths / contractDurationMonths))
+  const remainderMonths = totalMonths % contractDurationMonths
+  const endsOnBoundary = remainderMonths === 0
 
   for (let m = 1; m <= totalMonths; m++) {
     at(m, 'financement', effectiveMonthlyPayment)
@@ -134,10 +156,7 @@ function applyFinancingSchedule(
     at(totalMonths, 'financement', mileageCost)
   }
 
-  // Carte grise assumed included in the lease; malus/bonus counted separately, on the first payment.
-  at(1, 'fiscalite', vehicle.fiscal.malus - vehicle.fiscal.bonus)
-
-  return { maintenanceIncluded: f.maintenanceIncluded, insuranceIncluded: f.insuranceIncluded }
+  return { maintenanceIncluded: f.maintenanceIncluded, insuranceIncluded: f.insuranceIncluded, ownerPaidMonths: 0 }
 }
 
 /** Energy is smoothed evenly across each year's 12 months — the model only knows an annual average. */
@@ -163,10 +182,16 @@ function applyEnergySchedule(vehicle: VehicleConfig, holdingYears: number, annua
   }
 }
 
-/** Annual averages (maintenance, insurance) are smoothed monthly rather than spiked on one month. */
-function applyRecurringAnnualCost(totalMonths: number, annualAmount: number, category: CostCategoryKey, at: ApplyCost): void {
+/** Annual averages (maintenance, insurance) are smoothed monthly, over the given month range, rather than spiked on one month. */
+function applyRecurringAnnualCost(
+  fromMonth: number,
+  toMonth: number,
+  annualAmount: number,
+  category: CostCategoryKey,
+  at: ApplyCost,
+): void {
   const monthly = annualAmount / 12
-  for (let m = 1; m <= totalMonths; m++) {
+  for (let m = fromMonth; m <= toMonth; m++) {
     at(m, category, monthly)
   }
 }
@@ -202,10 +227,23 @@ export function computeMonthlySchedule(vehicle: VehicleConfig, holdingYears: num
     monthlyBreakdowns[month - 1][category] += amount
   }
 
-  const { maintenanceIncluded, insuranceIncluded } = applyFinancingSchedule(vehicle, holdingYears, annualMileageKm, at)
+  const { maintenanceIncluded, insuranceIncluded, ownerPaidMonths } = applyFinancingSchedule(
+    vehicle,
+    holdingYears,
+    annualMileageKm,
+    at,
+  )
   applyEnergySchedule(vehicle, holdingYears, annualMileageKm, at)
-  if (!maintenanceIncluded) applyRecurringAnnualCost(totalMonths, vehicle.maintenanceAnnualCost, 'entretien', at)
-  if (!insuranceIncluded) applyRecurringAnnualCost(totalMonths, vehicle.insuranceAnnualPremium, 'assurance', at)
+  if (!maintenanceIncluded) {
+    applyRecurringAnnualCost(1, totalMonths, vehicle.maintenanceAnnualCost, 'entretien', at)
+  } else if (ownerPaidMonths > 0) {
+    applyRecurringAnnualCost(totalMonths - ownerPaidMonths + 1, totalMonths, vehicle.maintenanceAnnualCost, 'entretien', at)
+  }
+  if (!insuranceIncluded) {
+    applyRecurringAnnualCost(1, totalMonths, vehicle.insuranceAnnualPremium, 'assurance', at)
+  } else if (ownerPaidMonths > 0) {
+    applyRecurringAnnualCost(totalMonths - ownerPaidMonths + 1, totalMonths, vehicle.insuranceAnnualPremium, 'assurance', at)
+  }
   applyTiresSchedule(vehicle, holdingYears, annualMileageKm, at)
 
   const months: MonthlyCostEntry[] = monthlyBreakdowns.map((breakdown, i) => {

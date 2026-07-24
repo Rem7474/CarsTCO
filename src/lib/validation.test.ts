@@ -27,9 +27,22 @@ describe('getVehicleWarnings', () => {
 
   it('flags a large mismatch between contractual and real mileage', () => {
     const vehicle = createDefaultElectricVehicle()
-    ;(vehicle.financing as LoaFinancing).contractualAnnualMileageKm = 8000
+    const financing = vehicle.financing as LoaFinancing
+    financing.contractualAnnualMileageKm = 8000
+    // Not a buyout: the mileage check-out actually happens, so the mismatch matters.
+    financing.endOfContractAction = 'return'
     const warnings = getVehicleWarnings(vehicle, { holdingYears: 5, annualMileageKm: 20000 })
     expect(warnings.some((w) => w.includes('dépasse largement le forfait'))).toBe(true)
+  })
+
+  it('does not flag a mileage mismatch when a buyout reaching the contract term waives the check-out', () => {
+    const vehicle = createDefaultElectricVehicle()
+    const financing = vehicle.financing as LoaFinancing
+    financing.contractualAnnualMileageKm = 8000
+    financing.endOfContractAction = 'buyout' // default already, kept explicit for clarity
+    // holdingYears: 5 → 60 months > the 37-month contract: bought out mid-holding, never returned.
+    const warnings = getVehicleWarnings(vehicle, { holdingYears: 5, annualMileageKm: 20000 })
+    expect(warnings.some((w) => w.includes('dépasse largement le forfait'))).toBe(false)
   })
 
   it('flags a manual LOA rent far from the auto-calculated estimate', () => {

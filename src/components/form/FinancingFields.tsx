@@ -230,7 +230,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
                   { value: 'renew', label: 'Reconduire un nouveau contrat' },
                   { value: 'return', label: 'Restituer le véhicule' },
                 ]}
-                help="La levée d'option n'est prise en compte que si la durée de détention tombe exactement en fin de contrat."
+                help="Si la détention dépasse la durée du contrat, le rachat est simulé à la fin du contrat puis le véhicule est conservé en pleine propriété ensuite."
               />
               {financing.endOfContractAction === 'buyout' && (
                 <>
@@ -248,7 +248,7 @@ export function FinancingFields({ purchasePrice, onPurchasePriceChange, financin
                     onChange={(v) => onFinancingChange({ ...financing, estimatedResaleValueAfterBuyout: v })}
                     suffix="€"
                     step={100}
-                    help="Si le véhicule est revendu juste après la levée d'option."
+                    help="Valeur du véhicule à la fin de la période de détention (immédiatement après le rachat si elle tombe en fin de contrat, ou après plusieurs années de pleine propriété sinon)."
                   />
                 </>
               )}
