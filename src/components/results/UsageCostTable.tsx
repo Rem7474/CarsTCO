@@ -1,6 +1,7 @@
 import type { VehicleConfig, VehicleResult } from '../../types/scenario'
 import { getVehicleColor } from '../../lib/chartColors'
 import { formatEuroPrecise } from '../../lib/format'
+import { ScrollableTableCard } from './ScrollableTableCard'
 
 interface Props {
   vehicles: VehicleConfig[]
@@ -17,7 +18,7 @@ export function UsageCostTable({ vehicles, results, totalKm }: Props) {
   const minTotal = Math.min(...totals)
 
   return (
-    <div className="overflow-x-auto rounded-[20px] border border-border bg-white px-[26px] py-6">
+    <ScrollableTableCard className="px-[26px] py-6">
       <h3 className="mb-0.5 font-display text-[15.5px] font-bold text-ink">Coût d'usage pur (aux 100 km)</h3>
       <p className="mb-4 text-[12.5px] text-muted">
         Énergie + pneus uniquement, indépendamment du mode de financement.
@@ -71,6 +72,6 @@ export function UsageCostTable({ vehicles, results, totalKm }: Props) {
           </tr>
         </tbody>
       </table>
-    </div>
+    </ScrollableTableCard>
   )
 }
