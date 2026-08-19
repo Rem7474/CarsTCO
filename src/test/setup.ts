@@ -15,3 +15,13 @@ if (typeof HTMLDialogElement !== 'undefined') {
     }
   }
 }
+
+// jsdom doesn't implement ResizeObserver — stub it out so components that
+// observe element size (e.g. ScrollableTableCard) can mount under test.
+if (typeof globalThis.ResizeObserver === 'undefined') {
+  globalThis.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+}
