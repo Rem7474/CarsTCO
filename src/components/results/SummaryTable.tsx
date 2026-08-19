@@ -1,6 +1,7 @@
 import type { VehicleConfig, VehicleResult } from '../../types/scenario'
 import { CATEGORY_LABELS, CATEGORY_ORDER, getVehicleColor } from '../../lib/chartColors'
 import { formatEuro, formatEuroPrecise } from '../../lib/format'
+import { ScrollableTableCard } from './ScrollableTableCard'
 
 interface Props {
   vehicles: VehicleConfig[]
@@ -23,7 +24,7 @@ export function SummaryTable({ vehicles, results }: Props) {
   const isWinner = (r: VehicleResult) => r.totalCost === minCost && winners.length < results.length
 
   return (
-    <div className="overflow-x-auto rounded-[20px] border border-border bg-white px-[26px] py-6">
+    <ScrollableTableCard className="px-[26px] py-6">
       <h3 className="mb-4 font-display text-[15.5px] font-bold text-ink">Tableau de synthèse détaillé</h3>
       <table aria-label="Tableau de synthèse" className="w-full min-w-[420px] border-collapse text-[13.5px]">
         <thead>
@@ -80,6 +81,6 @@ export function SummaryTable({ vehicles, results }: Props) {
           </tr>
         </tbody>
       </table>
-    </div>
+    </ScrollableTableCard>
   )
 }

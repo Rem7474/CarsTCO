@@ -108,7 +108,9 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
   // Carte grise is assumed already embedded in the lease payment (registered to the
   // lessor), but malus/bonus écologique are real cash flows for the lessee — in
   // practice they're usually netted against the first payment/apport by the dealer.
-  const fiscaliteCost = vehicle.fiscal.malus - vehicle.fiscal.bonus
+  // This is the cost for a single contract/vehicle; the renewal path below multiplies
+  // it by the number of contracts simulated, since each renewal registers a new vehicle.
+  const perContractFiscaliteCost = vehicle.fiscal.malus - vehicle.fiscal.bonus
   notes.push(
     'LOA/LDD : la carte grise est supposée déjà incluse dans le loyer ; le bonus/malus écologique est compté ' +
       'séparément (en pratique souvent déduit/ajouté directement sur le premier loyer par le concessionnaire).',
@@ -135,7 +137,7 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
     )
     return {
       financementCost,
-      fiscaliteCost,
+      fiscaliteCost: perContractFiscaliteCost,
       maintenanceIncluded: f.maintenanceIncluded,
       insuranceIncluded: f.insuranceIncluded,
       mileagePenaltyApplies: false,
@@ -163,6 +165,17 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
       : `LDD : ${numContracts} contrat(s) de ${f.contractDurationMonths} mois simulé(s) sur la durée de détention.`,
   )
 
+  // Each simulated contract registers a (new) vehicle, so the eco-malus/bonus is paid
+  // once per contract, not once for the whole holding period — otherwise a scenario with
+  // several renewals would look artificially cheap next to buying a single vehicle.
+  const fiscaliteCost = perContractFiscaliteCost * numContracts
+  if (numContracts > 1) {
+    notes.push(
+      `Bonus/malus écologique compté ${numContracts} fois (un par contrat simulé, chacun portant sur un véhicule ` +
+        'nouvellement immatriculé).',
+    )
+  }
+
   // Buying out at the end of the contract means the vehicle is never handed back to the
   // lessor, so there's no mileage check-out and no excess-mileage fee to pay.
   let mileagePenaltyApplies = true
@@ -184,7 +197,21 @@ function computeFinancing(vehicle: VehicleConfig, holdingYears: number): Financi
       )
     }
   } else if (f.endOfContractAction === 'return') {
-    financementCost += f.restitutionFees
+    // Every simulated contract ends in a hand-back — including the final, possibly-partial
+    // one (returning early still means returning) — so restitution fees are paid once per
+    // contract, not just once for the whole holding period.
+    financementCost += f.restitutionFees * numContracts
+    if (numContracts > 1) {
+      notes.push(`Frais de restitution comptés ${numContracts} fois (un par contrat rendu).`)
+    }
+  } else if (numContracts > 1) {
+    // 'renew': the vehicle is traded in for a new lease at each interior contract
+    // boundary (still a hand-back to the lessor), but the final contract is still
+    // running at the end of the holding period, so it isn't handed back within scope.
+    financementCost += f.restitutionFees * (numContracts - 1)
+    notes.push(
+      `Frais de restitution comptés ${numContracts - 1} fois (un par renouvellement de contrat au sein de la période de détention).`,
+    )
   }
 
   return {

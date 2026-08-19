@@ -85,7 +85,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-cream font-sans text-ink print:bg-white">
-      <header className="sticky top-0 z-20 border-b border-border bg-white print:hidden">
+      <header className="static border-b border-border bg-white lg:sticky lg:top-0 lg:z-20 print:hidden">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2.5 lg:gap-4 lg:py-4">
           <div className="flex items-center gap-2.5 lg:gap-3">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[9px] bg-teal font-display text-base font-extrabold text-white lg:h-10 lg:w-10 lg:rounded-[11px] lg:text-lg">
@@ -113,7 +113,7 @@ function App() {
               Imprimer / PDF
             </button>
             <button
-              className="rounded px-1.5 text-[13px] font-semibold text-muted underline-offset-2 hover:text-red-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
+              className="rounded px-2.5 py-2 text-[13px] font-semibold text-muted underline-offset-2 hover:text-red-text hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-teal"
               onClick={() => setResetDialogOpen(true)}
             >
               Réinitialiser

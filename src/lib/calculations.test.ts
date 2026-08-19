@@ -291,6 +291,67 @@ describe('computeVehicleResult — LOA financing', () => {
     expect(result.notes.some((n) => n.includes('aucun frais de dépassement'))).toBe(true)
   })
 
+  it('counts the eco-malus/bonus once per contract when several LOA contracts are simulated (renew)', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 1000,
+      monthlyPayment: 300,
+      contractDurationMonths: 36,
+      contractualAnnualMileageKm: 15000,
+      excessMileageCostPerKm: 0.1,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 250,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      endOfContractAction: 'renew',
+      buybackValue: 0,
+      estimatedResaleValueAfterBuyout: 0,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ financing, fiscal: { malus: 500, bonus: 0 } })
+    const result = computeVehicleResult(vehicle, 9, 15000) // 108 months = 3 contracts of 36 months
+
+    expect(result.breakdown.fiscalite).toBeCloseTo(500 * 3, 6)
+    // 2 interior renewals hand the vehicle back; the 3rd contract is still running at
+    // the end of the holding period, so it's never handed back within scope.
+    expect(result.breakdown.financement).toBeCloseTo(
+      1000 * 3 + 300 * (108 - 3) + 250 * 2,
+      6,
+    )
+    expect(result.notes.some((n) => n.includes('compté 3 fois'))).toBe(true)
+    expect(result.notes.some((n) => n.includes('comptés 2 fois'))).toBe(true)
+  })
+
+  it('counts the eco-malus/bonus and restitution fees once per contract when returning at every renewal', () => {
+    const financing: LoaFinancing = {
+      mode: 'loa',
+      firstPayment: 1000,
+      monthlyPayment: 300,
+      contractDurationMonths: 36,
+      contractualAnnualMileageKm: 15000,
+      excessMileageCostPerKm: 0.1,
+      underMileageRefundPerKm: 0,
+      restitutionFees: 250,
+      maintenanceIncluded: false,
+      insuranceIncluded: false,
+      endOfContractAction: 'return',
+      buybackValue: 0,
+      estimatedResaleValueAfterBuyout: 0,
+      autoCalculate: false,
+      annualInterestRatePct: 4,
+    }
+    const vehicle = baseVehicle({ financing, fiscal: { malus: 500, bonus: 0 } })
+    const result = computeVehicleResult(vehicle, 9, 15000) // 3 contracts of 36 months, each returned
+
+    expect(result.breakdown.fiscalite).toBeCloseTo(500 * 3, 6)
+    expect(result.breakdown.financement).toBeCloseTo(
+      1000 * 3 + 300 * (108 - 3) + 250 * 3,
+      6,
+    )
+    expect(result.notes.some((n) => n.includes('comptés 3 fois'))).toBe(true)
+  })
+
   it('uses the auto-calculated monthly payment instead of the manual one when autoCalculate is on', () => {
     const financing: LoaFinancing = {
       mode: 'loa',

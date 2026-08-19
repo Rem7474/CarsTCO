@@ -3,6 +3,7 @@ import type { CostBreakdown, CostCategory, ScenarioConfig } from '../../types/sc
 import { computeMonthlySchedule } from '../../lib/monthlySchedule'
 import { CATEGORY_LABELS, CATEGORY_ORDER, getVehicleColor } from '../../lib/chartColors'
 import { formatEuro } from '../../lib/format'
+import { ScrollableTableCard } from './ScrollableTableCard'
 
 interface Props {
   scenario: ScenarioConfig
@@ -82,7 +83,7 @@ export function MonthlyScheduleTable({ scenario }: Props) {
       </div>
 
       {viewMode === 'compact' ? (
-        <div className="overflow-x-auto rounded-[20px] border border-border bg-white px-[22px] py-5">
+        <ScrollableTableCard className="px-[22px] py-5">
           <table
             aria-label="Dépenses détaillées — vue compacte, tous véhicules"
             className="w-full min-w-[520px] border-collapse text-[13px]"
@@ -197,16 +198,13 @@ export function MonthlyScheduleTable({ scenario }: Props) {
               })}
             </tbody>
           </table>
-        </div>
+        </ScrollableTableCard>
       ) : (
         <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-2">
           {schedules.map(({ vehicle, schedule }) => {
             const color = getVehicleColor(vehicle, vehicles)
             return (
-              <div
-                key={vehicle.id}
-                className="overflow-x-auto rounded-[20px] border border-border bg-white px-[22px] py-5"
-              >
+              <ScrollableTableCard key={vehicle.id} className="px-[22px] py-5">
                 <div className="mb-3 flex items-center gap-2">
                   <span
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
@@ -285,7 +283,7 @@ export function MonthlyScheduleTable({ scenario }: Props) {
                     })}
                   </tbody>
                 </table>
-              </div>
+              </ScrollableTableCard>
             )
           })}
         </div>
