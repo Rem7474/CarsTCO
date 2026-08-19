@@ -104,8 +104,10 @@ function applyFinancingSchedule(
         })
       : f.monthlyPayment
 
-  // Carte grise assumed included in the lease; malus/bonus counted separately, on the first payment.
-  at(1, 'fiscalite', vehicle.fiscal.malus - vehicle.fiscal.bonus)
+  // Carte grise assumed included in the lease; malus/bonus counted separately, on the first
+  // payment of the single contract (the buyout/mid-holding path below never renews).
+  const perContractFiscaliteCost = vehicle.fiscal.malus - vehicle.fiscal.bonus
+  at(1, 'fiscalite', perContractFiscaliteCost)
 
   // A buyout ends the lease for good: pay for a single contract term, then the vehicle is
   // owned outright for the rest of the holding period — mirrors calculations.ts exactly.
@@ -143,6 +145,12 @@ function applyFinancingSchedule(
     at(1 + k * contractDurationMonths, 'financement', f.firstPayment)
   }
 
+  // Each renewed contract registers a (new) vehicle: malus/bonus was already booked for
+  // the first contract above, so book it again on every subsequent contract start.
+  for (let k = 1; k < numContracts; k++) {
+    at(1 + k * contractDurationMonths, 'fiscalite', perContractFiscaliteCost)
+  }
+
   // Buying out at the end of the contract means no restitution, hence no mileage check-out.
   let mileagePenaltyApplies = true
 
@@ -154,7 +162,16 @@ function applyFinancingSchedule(
       at(totalMonths, 'financement', f.restitutionFees)
     }
   } else if (f.endOfContractAction === 'return') {
-    at(totalMonths, 'financement', f.restitutionFees)
+    // Every contract ends in a hand-back, including a possibly-partial final one.
+    for (let k = 1; k <= numContracts; k++) {
+      at(Math.min(totalMonths, k * contractDurationMonths), 'financement', f.restitutionFees)
+    }
+  } else {
+    // 'renew': only the interior contract boundaries hand the vehicle back — the final
+    // contract is still running at the end of the holding period.
+    for (let k = 1; k < numContracts; k++) {
+      at(k * contractDurationMonths, 'financement', f.restitutionFees)
+    }
   }
 
   if (mileagePenaltyApplies) {
